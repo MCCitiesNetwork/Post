@@ -1,0 +1,5 @@
+name: DemocracyPost
+version: '${version}'
+main: io.github.md5sha256.democracypost.DemocracyPost
+api-version: '1.20'
+authors: [andrewandy]
