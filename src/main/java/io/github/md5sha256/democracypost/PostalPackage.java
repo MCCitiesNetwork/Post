@@ -6,18 +6,22 @@ import java.util.UUID;
 
 public class PostalPackage {
 
-    private final UUID sender;
+    private final UUID id;
     private final Date expiryDate;
     private final PackageContent content;
     private boolean claimed;
 
 
-    public PostalPackage(@Nonnull UUID sender, @Nonnull Date expiryDate, @Nonnull PackageContent content) {
-        this(sender, expiryDate, content, false);
+    public PostalPackage(@Nonnull Date expiryDate, @Nonnull PackageContent content) {
+        this(UUID.randomUUID(), expiryDate, content);
     }
 
-    public PostalPackage(@Nonnull UUID sender, @Nonnull Date expiryDate, @Nonnull PackageContent content, boolean claimed) {
-        this.sender = sender;
+    public PostalPackage(@Nonnull UUID id, @Nonnull Date expiryDate, @Nonnull PackageContent content) {
+        this(id, expiryDate, content, false);
+    }
+
+    public PostalPackage(@Nonnull UUID id, @Nonnull Date expiryDate, @Nonnull PackageContent content, boolean claimed) {
+        this.id = id;
         this.expiryDate = expiryDate;
         this.content = content;
         this.claimed = claimed;
@@ -25,12 +29,12 @@ public class PostalPackage {
 
     @Nonnull
     public PostalPackage deepCopy() {
-        return new PostalPackage(this.sender, this.expiryDate, this.content.deepCopy(), this.claimed);
+        return new PostalPackage(this.id, this.expiryDate, this.content.deepCopy(), this.claimed);
     }
 
     @Nonnull
-    public UUID sender() {
-        return this.sender;
+    public UUID id() {
+        return this.id;
     }
 
     @Nonnull

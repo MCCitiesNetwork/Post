@@ -34,7 +34,7 @@ public class UserState {
     }
 
     public void addPackage(@Nonnull PostalPackage postalPackage) {
-        this.packages.put(postalPackage.sender(), postalPackage);
+        this.packages.put(postalPackage.id(), postalPackage);
     }
 
     @Nonnull
@@ -51,7 +51,7 @@ public class UserState {
                 removed.add(postalPackage);
             }
         }
-        removed.forEach(postalPackage -> this.packages.remove(postalPackage.sender()));
+        removed.forEach(postalPackage -> this.packages.remove(postalPackage.id()));
         return removed;
     }
 

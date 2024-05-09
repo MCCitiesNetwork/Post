@@ -209,7 +209,7 @@ public class FlatFileUserDataStore implements UserDataStore {
         for (UserState userState : this.cache.values()) {
             Collection<PostalPackage> expiredPackages = userState.removeExpiredPackages();
             for (PostalPackage expiredPackage : expiredPackages) {
-                UserState sender = getOrCreateUserState(expiredPackage.sender());
+                UserState sender = getOrCreateUserState(expiredPackage.id());
                 sender.addPackage(expiredPackage);
             }
         }
