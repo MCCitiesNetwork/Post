@@ -32,6 +32,7 @@ public final class DemocracyPost extends JavaPlugin {
     @Override
     public void onEnable() {
         // Plugin startup logic
+        getServer().getPluginManager().registerEvents(new PlayerListener(this, this.dataStore), this);
         int saveDurationTicks = Tick.tick().fromDuration(
                 Duration.of(10, TimeUnit.MINUTES.toChronoUnit()));
         getServer().getScheduler().runTaskTimer(

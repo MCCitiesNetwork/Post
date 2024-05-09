@@ -12,7 +12,7 @@ import io.github.md5sha256.democracypost.database.UserDataStore;
 import io.github.md5sha256.democracypost.database.UserState;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.Style;
+import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -31,6 +31,7 @@ import javax.annotation.Nonnull;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -52,7 +53,7 @@ public class PostOfficeMenu {
     private static boolean handleInventoryClose(InventoryGui.Close close, Inventory storageInv) {
         HumanEntity player = close.getPlayer();
         ItemStack[] contents = storageInv.getStorageContents();
-        InventoryUtil.addItems(player, List.of(contents));
+        InventoryUtil.addItems(player, Arrays.asList(contents));
         storageInv.clear();
         return true;
     }
@@ -154,7 +155,7 @@ public class PostOfficeMenu {
             meta.displayName(Component.text("Collect Package", NamedTextColor.GREEN));
             if (humanEntity.getInventory().getSize() < size) {
                 Component warning = Component.text("Warning: insufficient inventory space!", NamedTextColor.YELLOW)
-                        .style(Style.empty());
+                        .decoration(TextDecoration.ITALIC, false);
                 meta.lore(List.of(warning));
             }
             collectButton.setItemMeta(meta);
@@ -188,8 +189,9 @@ public class PostOfficeMenu {
     private GuiElement elementPostIcon(char c) {
         ItemStack itemStack = new ItemStack(Material.CHEST);
         ItemMeta meta = itemStack.getItemMeta();
-        meta.displayName(Component.text("Post a package", NamedTextColor.RED));
-        Component priceIndicator = Component.text("Price: $0.50", NamedTextColor.GRAY);
+        meta.displayName(Component.text("Post a package", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+        Component priceIndicator = Component.text("Price: $0.50", NamedTextColor.GRAY)
+                .decoration(TextDecoration.ITALIC, false);
         meta.lore(List.of(priceIndicator));
         itemStack.setItemMeta(meta);
         GuiElement element = new DisplayGuiElement(c, itemStack);
@@ -203,13 +205,23 @@ public class PostOfficeMenu {
     private GuiElement elementPackagesIcon(char c, UserState userState) {
         ItemStack itemStack = new ItemStack(Material.PLAYER_HEAD);
         ItemMeta meta = itemStack.getItemMeta();
-        meta.displayName(Component.text("Open Postbox", NamedTextColor.RED));
-        Component numPackages = Component.text(userState.packages().size(), NamedTextColor.WHITE).style(Style.empty());
-        meta.lore(List.of(numPackages));
+        meta.displayName(Component.text("Open Postbox", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+        int numPackages = userState.packages().size();
+        Component numPackagesIndicator;
+        if (numPackages > 0) {
+            numPackagesIndicator = Component.text("Num packages: " + userState.packages().size(),
+                            NamedTextColor.WHITE)
+                    .decoration(TextDecoration.ITALIC, false);
+        } else {
+            numPackagesIndicator = Component.text("No unopened packages!", NamedTextColor.GREEN)
+                    .decoration(TextDecoration.ITALIC, false);
+        }
+        meta.lore(List.of(numPackagesIndicator));
+        itemStack.setItemMeta(meta);
         GuiElement element = new DisplayGuiElement(c, itemStack);
         element.setAction(action -> {
             action.getGui().close(false);
-            createParcelListUi(userState.packages()).draw(action.getWhoClicked());
+            createParcelListUi(userState.packages()).show(action.getWhoClicked());
             return true;
         });
         return element;
@@ -234,11 +246,14 @@ public class PostOfficeMenu {
         ItemStack itemStack = new ItemStack(Material.PLAYER_HEAD);
         ItemMeta meta = itemStack.getItemMeta();
         Component displayName = Component.text("Package Number: " + index, NamedTextColor.GOLD)
-                .style(Style.empty());
+                .decoration(TextDecoration.ITALIC, false);
         meta.displayName(displayName);
-        Component displaySender = Component.text("From: " + senderName, NamedTextColor.WHITE).style(Style.empty());
-        Component displayNumItems = Component.text(content.items().size() + " items").style(Style.empty());
-        Component displayExpiryDate = Component.text("Expires: " + date, NamedTextColor.YELLOW).style(Style.empty());
+        Component displaySender = Component.text("From: " + senderName, NamedTextColor.WHITE)
+                .decoration(TextDecoration.ITALIC, false);
+        Component displayNumItems = Component.text(content.items().size() + " items")
+                .decoration(TextDecoration.ITALIC, false);
+        Component displayExpiryDate = Component.text("Expires: " + date, NamedTextColor.YELLOW)
+                .decoration(TextDecoration.ITALIC, false);
         meta.lore(List.of(displaySender, displayNumItems, displayExpiryDate));
         itemStack.setItemMeta(meta);
         return new DisplayGuiElement(c, itemStack);
@@ -246,7 +261,8 @@ public class PostOfficeMenu {
 
     private GuiElement elementNext(char c) {
         final ItemStack itemStack = new ItemStack(Material.PAPER);
-        final Component displayName = Component.text("Next Page", NamedTextColor.DARK_AQUA);
+        final Component displayName = Component.text("Next Page", NamedTextColor.DARK_AQUA)
+                .decoration(TextDecoration.ITALIC, false);
         return new GuiPageElement(c,
                 itemStack,
                 GuiPageElement.PageAction.NEXT,
@@ -255,7 +271,8 @@ public class PostOfficeMenu {
 
     private GuiElement elementPrevious(char c) {
         final ItemStack itemStack = new ItemStack(Material.PAPER);
-        final Component displayName = Component.text("Previous Page", NamedTextColor.DARK_AQUA);
+        final Component displayName = Component.text("Previous Page", NamedTextColor.DARK_AQUA)
+                .decoration(TextDecoration.ITALIC, false);
         return new GuiPageElement(c,
                 itemStack,
                 GuiPageElement.PageAction.PREVIOUS,
@@ -265,19 +282,29 @@ public class PostOfficeMenu {
     private GuiElement elementPost(char c, Inventory storageInv) {
         ItemStack itemStack = new ItemStack(Material.DIAMOND);
         ItemMeta meta = itemStack.getItemMeta();
-        meta.displayName(Component.text("Post Package", NamedTextColor.AQUA));
+        meta.displayName(Component.text("Post Package", NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
         itemStack.setItemMeta(meta);
         StaticGuiElement element = new StaticGuiElement(c, itemStack);
         element.setAction(action -> {
             // Don't clear the storage inv, items will be added back
             if (!(action.getWhoClicked() instanceof Conversable conversable)) {
-                return false;
+                return true;
             }
             List<ItemStack> items = new ArrayList<>();
             for (ItemStack item : storageInv.getStorageContents()) {
                 if (item != null) {
                     items.add(item);
                 }
+            }
+            if (items.isEmpty()) {
+                ItemMeta updated = itemStack.getItemMeta();
+                updated.lore(List.of(Component.text("Cannot send empty parcels!", NamedTextColor.RED)
+                        .decoration(TextDecoration.BOLD, true)
+                        .decoration(TextDecoration.ITALIC, false)));
+                itemStack.setItemMeta(updated);
+                element.setItem(itemStack);
+                action.getGui().draw();
+                return true;
             }
             // Clear the storage inv here
             storageInv.clear();
@@ -303,7 +330,7 @@ public class PostOfficeMenu {
 
     @Nonnull
     private GuiElement elementPanes(char c) {
-        final ItemStack itemStack = new ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE);
+        final ItemStack itemStack = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         final ItemMeta meta = itemStack.getItemMeta();
         meta.displayName(Component.empty());
         itemStack.setItemMeta(meta);
@@ -311,19 +338,20 @@ public class PostOfficeMenu {
     }
 
     private GuiElement elementBack(char c) {
-        final ItemStack itemStack = new ItemStack(Material.BARRIER);
-        final Component displayName = Component.text("Back", NamedTextColor.RED);
+        final ItemStack itemStack = new ItemStack(Material.GLOWSTONE);
+        final Component displayName = Component.text("Back", NamedTextColor.RED)
+                .decoration(TextDecoration.ITALIC, false);
         return new GuiBackElement(c, itemStack, LegacyComponentSerializer.legacySection().serialize(displayName));
     }
 
     @Nonnull
     private GuiElement elementExit(char c) {
         final ItemStack itemStack = new ItemStack(Material.BARRIER);
-        final Component displayName = Component.text("Exit", NamedTextColor.RED);
+        final Component displayName = Component.text("Exit", NamedTextColor.RED)
+                .decoration(TextDecoration.ITALIC, false);
         return new StaticGuiElement(c,
                 itemStack,
                 click -> {
-
                     click.getGui().close();
                     return false;
                 }, LegacyComponentSerializer.legacySection().serialize(displayName));
