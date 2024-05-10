@@ -2,6 +2,7 @@ package io.github.md5sha256.democracypost.database;
 
 import io.github.md5sha256.democracypost.PostalPackage;
 import io.github.md5sha256.democracypost.PostalPackageFactory;
+import io.github.md5sha256.democracypost.serializer.Serializers;
 import org.bukkit.Server;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitScheduler;
@@ -88,19 +89,24 @@ public class FlatFileUserDataStore implements UserDataStore {
         return loadUser(fileFor(uuid));
     }
 
+    private GsonConfigurationLoader.Builder loader() {
+        return GsonConfigurationLoader.builder()
+                .defaultOptions(options -> options.serializers(Serializers.defaults()));
+    }
+
     @Nullable
     private UserState loadUser(@Nonnull File file) throws IOException {
         if (!file.isFile()) {
             return null;
         }
-        var loader = GsonConfigurationLoader.builder().file(file).build();
+        var loader = loader().file(file).build();
         ConfigurationNode node = loader.load();
         return node.<UserState>get(UserState.class, UserState::new);
     }
 
     private void saveUser(@Nonnull UUID player, @Nonnull UserState userState) throws IOException {
         File file = fileFor(player);
-        var loader = GsonConfigurationLoader.builder().file(file).build();
+        var loader = loader().file(file).build();
         ConfigurationNode node = loader.createNode();
         node.set(userState);
         loader.save(node);

@@ -7,12 +7,14 @@
 package io.github.md5sha256.democracypost;
 
 import org.bukkit.inventory.ItemStack;
+import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@ConfigSerializable
 public record PackageContent(@Nonnull UUID sender,
                              @Nonnull UUID receiver,
                              @Nonnull List<ItemStack> items) {

@@ -314,6 +314,7 @@ public class PostOfficeMenu {
             }
             // Clear the storage inv here
             storageInv.clear();
+            action.getGui().close(true);
             Prompt prompt = new PostPrompt(items, this.postalPackageFactory, this.plugin.getServer());
             Conversation conversation = this.conversationFactory.withFirstPrompt(prompt)
                     .withEscapeSequence("cancel")

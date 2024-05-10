@@ -64,7 +64,9 @@ public final class DemocracyPost extends JavaPlugin {
         if (!dataStoreFolder.isDirectory()) {
             Files.createDirectory(dataStoreFolder.toPath());
         }
-        return new FlatFileUserDataStore(this, dataStoreFolder.toPath());
+        return new FlatFileUserDataStore(this,
+                new SimplePostalPackageFactory(this.dataStore, Duration.ofSeconds(30)),
+                dataStoreFolder.toPath());
     }
 
     private void initDataFolder() throws IOException {

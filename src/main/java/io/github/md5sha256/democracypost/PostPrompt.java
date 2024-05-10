@@ -2,6 +2,7 @@ package io.github.md5sha256.democracypost;
 
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
+import org.bukkit.conversations.Conversable;
 import org.bukkit.conversations.ConversationContext;
 import org.bukkit.conversations.Prompt;
 import org.bukkit.conversations.StringPrompt;
@@ -32,7 +33,7 @@ public class PostPrompt extends StringPrompt {
 
     @Override
     public @NotNull String getPromptText(@NotNull ConversationContext context) {
-        return "player";
+        return "Who should this package be mailed to? (or \"cancel\")";
     }
 
     @Override
@@ -40,21 +41,22 @@ public class PostPrompt extends StringPrompt {
         if (input == null) {
             return this;
         }
+        Conversable sender = context.getForWhom();
         if (!(context.getForWhom() instanceof HumanEntity player)) {
             return END_OF_CONVERSATION;
         }
         OfflinePlayer offlinePlayer = this.server.getOfflinePlayerIfCached(input);
         if (offlinePlayer == null || !offlinePlayer.hasPlayedBefore()) {
-            player.sendMessage("Unknown player: " + input);
+            sender.sendRawMessage("Unknown player: " + input);
             return this;
         }
         UUID recipient = offlinePlayer.getUniqueId();
         if (player.getUniqueId().equals(recipient)) {
-            player.sendMessage("You can't mail a parcel to yourself!");
+            sender.sendRawMessage("You can't mail a parcel to yourself!");
             return this;
         }
         this.postalPackageFactory.createAndPostPackage(player.getUniqueId(), recipient, this.contents);
-        player.sendMessage("Parcel mailed!");
+        sender.sendRawMessage("Parcel mailed!");
         return END_OF_CONVERSATION;
     }
 }
