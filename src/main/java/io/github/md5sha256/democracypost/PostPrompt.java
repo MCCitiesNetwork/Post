@@ -1,6 +1,5 @@
 package io.github.md5sha256.democracypost;
 
-import io.github.md5sha256.democracypost.database.UserDataStore;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
 import org.bukkit.conversations.ConversationContext;
@@ -12,21 +11,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 public class PostPrompt extends StringPrompt {
 
     private final List<ItemStack> contents;
-    private final UserDataStore dataStore;
+    private final PostalPackageFactory postalPackageFactory;
     private final Server server;
 
-    public PostPrompt(@Nonnull List<ItemStack> items, @Nonnull UserDataStore dataStore, @Nonnull Server server) {
+    public PostPrompt(
+            @Nonnull List<ItemStack> items,
+            @Nonnull PostalPackageFactory postalPackageFactory,
+            @Nonnull Server server
+    ) {
         this.contents = List.copyOf(items);
-        this.dataStore = dataStore;
+        this.postalPackageFactory = postalPackageFactory;
         this.server = server;
     }
 
@@ -48,13 +48,13 @@ public class PostPrompt extends StringPrompt {
             player.sendMessage("Unknown player: " + input);
             return this;
         }
-        // FIXME add a conversation factory
         UUID recipient = offlinePlayer.getUniqueId();
-        UUID sender = player.getUniqueId();
-        PackageContent content = new PackageContent(sender, recipient, this.contents);
-        Date expiry = Date.from(Instant.now().plus(Duration.ofDays(7)));
-        PostalPackage postalPackage = new PostalPackage(expiry, content);
-        this.dataStore.getOrCreateUserState(sender).addPackage(postalPackage);
+        if (player.getUniqueId().equals(recipient)) {
+            player.sendMessage("You can't mail a parcel to yourself!");
+            return this;
+        }
+        this.postalPackageFactory.createAndPostPackage(player.getUniqueId(), recipient, this.contents);
+        player.sendMessage("Parcel mailed!");
         return END_OF_CONVERSATION;
     }
 }

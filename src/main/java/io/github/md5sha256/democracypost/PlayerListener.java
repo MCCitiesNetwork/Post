@@ -21,7 +21,8 @@ public class PlayerListener implements Listener {
 
     public PlayerListener(@Nonnull JavaPlugin plugin, @Nonnull UserDataStore dataStore) {
         this.plugin = plugin;
-        this.menu = new PostOfficeMenu(plugin, dataStore);
+        PostalPackageFactory factory = new SimplePostalPackageFactory(dataStore, Duration.ofSeconds(30));
+        this.menu = new PostOfficeMenu(plugin, dataStore, factory);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

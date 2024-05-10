@@ -1,6 +1,7 @@
 package io.github.md5sha256.democracypost.database;
 
 import io.github.md5sha256.democracypost.PostalPackage;
+import io.github.md5sha256.democracypost.PostalPackageFactory;
 import org.bukkit.Server;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitScheduler;
@@ -30,13 +31,19 @@ public class FlatFileUserDataStore implements UserDataStore {
     private final BukkitScheduler scheduler;
     private final Plugin plugin;
     private final Server server;
+    private final PostalPackageFactory postalPackageFactory;
     private final Map<UUID, UserState> cache = new ConcurrentHashMap<>();
 
 
-    public FlatFileUserDataStore(@Nonnull Plugin plugin, @Nonnull Path root) {
+    public FlatFileUserDataStore(
+            @Nonnull Plugin plugin,
+            @Nonnull PostalPackageFactory postalPackageFactory,
+            @Nonnull Path root
+    ) {
         this.plugin = plugin;
         this.scheduler = plugin.getServer().getScheduler();
         this.server = plugin.getServer();
+        this.postalPackageFactory = postalPackageFactory;
         this.root = root;
     }
 
@@ -206,11 +213,16 @@ public class FlatFileUserDataStore implements UserDataStore {
 
     @Override
     public void transferExpiredPackages() {
-        for (UserState userState : this.cache.values()) {
+        for (Map.Entry<UUID, UserState> entry : this.cache.entrySet()) {
+            UUID uuid = entry.getKey();
+            UserState userState = entry.getValue();
             Collection<PostalPackage> expiredPackages = userState.removeExpiredPackages();
             for (PostalPackage expiredPackage : expiredPackages) {
-                UserState sender = getOrCreateUserState(expiredPackage.id());
-                sender.addPackage(expiredPackage);
+                if (expiredPackage.content().sender().equals(uuid)) {
+                    // Drop parcel if this is already a return package
+                    continue;
+                }
+                this.postalPackageFactory.createAndPostPackage(uuid, uuid, expiredPackage.content().items());
             }
         }
     }

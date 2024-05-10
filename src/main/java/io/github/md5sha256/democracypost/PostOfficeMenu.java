@@ -43,11 +43,17 @@ public class PostOfficeMenu {
     private final JavaPlugin plugin;
     private final ConversationFactory conversationFactory;
     private final UserDataStore dataStore;
+    private final PostalPackageFactory postalPackageFactory;
 
-    public PostOfficeMenu(@Nonnull JavaPlugin plugin, @Nonnull UserDataStore dataStore) {
+    public PostOfficeMenu(
+            @Nonnull JavaPlugin plugin,
+            @Nonnull UserDataStore dataStore,
+            @Nonnull PostalPackageFactory postalPackageFactory
+    ) {
         this.plugin = plugin;
         this.conversationFactory = new ConversationFactory(plugin);
         this.dataStore = dataStore;
+        this.postalPackageFactory = postalPackageFactory;
     }
 
     private static boolean handleInventoryClose(InventoryGui.Close close, Inventory storageInv) {
@@ -308,7 +314,7 @@ public class PostOfficeMenu {
             }
             // Clear the storage inv here
             storageInv.clear();
-            Prompt prompt = new PostPrompt(items, this.dataStore, this.plugin.getServer());
+            Prompt prompt = new PostPrompt(items, this.postalPackageFactory, this.plugin.getServer());
             Conversation conversation = this.conversationFactory.withFirstPrompt(prompt)
                     .withEscapeSequence("cancel")
                     .withTimeout(60)
