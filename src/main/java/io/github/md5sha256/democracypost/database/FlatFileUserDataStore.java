@@ -76,7 +76,7 @@ public class FlatFileUserDataStore implements UserDataStore {
     @NotNull
     @Override
     public UserState getOrCreateUserState(@NotNull UUID player) {
-        return this.cache.computeIfAbsent(player, unused -> new UserState());
+        return this.cache.computeIfAbsent(player, UserState::new);
     }
 
     @Nonnull
@@ -101,7 +101,7 @@ public class FlatFileUserDataStore implements UserDataStore {
         }
         var loader = loader().file(file).build();
         ConfigurationNode node = loader.load();
-        return node.<UserState>get(UserState.class, UserState::new);
+        return node.<UserState>get(UserState.class, () -> null);
     }
 
     private void saveUser(@Nonnull UUID player, @Nonnull UserState userState) throws IOException {

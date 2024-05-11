@@ -16,10 +16,21 @@ import java.util.UUID;
 
 public class UserState {
 
+    private final UUID uuid;
+
     private final Map<UUID, PostalPackage> packages = new HashMap<>();
 
     public Collection<PostalPackage> packages() {
         return Collections.unmodifiableCollection(this.packages.values());
+    }
+
+    public UserState(@Nonnull UUID uuid) {
+        this.uuid = uuid;
+    }
+
+    @Nonnull
+    public UUID getUuid() {
+        return this.uuid;
     }
 
     @Nonnull
@@ -28,7 +39,7 @@ public class UserState {
         for (Map.Entry<UUID, PostalPackage> entry : this.packages.entrySet()) {
             copy.put(entry.getKey(), entry.getValue().deepCopy());
         }
-        UserState userState = new UserState();
+        UserState userState = new UserState(this.uuid);
         userState.packages.putAll(copy);
         return userState;
     }

@@ -6,6 +6,7 @@ import org.bukkit.inventory.ItemStack;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 
 import javax.annotation.Nonnull;
+import java.util.Date;
 
 public class Serializers {
 
@@ -16,6 +17,7 @@ public class Serializers {
     @Nonnull
     public static TypeSerializerCollection defaults() {
         return TypeSerializerCollection.defaults().childBuilder()
+                .registerExact(Date.class, new DateSerializer())
                 .registerExact(ItemStack.class, new ItemStackSerializer())
                 .registerExact(PostalPackage.class, new PostalPackageSerializer())
                 .registerExact(UserState.class, new UserStateSerializer())

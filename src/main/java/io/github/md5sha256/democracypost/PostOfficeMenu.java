@@ -133,7 +133,7 @@ public class PostOfficeMenu {
     }
 
 
-    public InventoryGui createParcelListUi(Collection<PostalPackage> packages) {
+    public InventoryGui createParcelListUi(UUID user) {
         String[] rows = new String[]{
                 "         ",
                 " ddddddd ",
@@ -149,34 +149,32 @@ public class PostOfficeMenu {
                 elementNext('n'),
                 elementPrevious('b'),
                 elementExit('e'),
-                elementPackages('d', packages)
+                elementPackages('d', user)
         );
     }
 
     private GuiElement elementCollectPackage(char c, UserState userState, PostalPackage postalPackage) {
-        DynamicGuiElement element = new DynamicGuiElement(c, humanEntity -> {
+        return new DynamicGuiElement(c, humanEntity -> {
             int size = postalPackage.content().items().size();
             ItemStack collectButton = new ItemStack(Material.EMERALD);
             ItemMeta meta = collectButton.getItemMeta();
-            meta.displayName(Component.text("Collect Package", NamedTextColor.GREEN));
+            Component displayName = Component.text("Collect Package", NamedTextColor.GREEN)
+                    .decoration(TextDecoration.ITALIC, false);
+            meta.displayName(displayName);
             if (humanEntity.getInventory().getSize() < size) {
                 Component warning = Component.text("Warning: insufficient inventory space!", NamedTextColor.YELLOW)
                         .decoration(TextDecoration.ITALIC, false);
                 meta.lore(List.of(warning));
             }
             collectButton.setItemMeta(meta);
-            return new DisplayGuiElement(c, collectButton);
-        });
-        element.setAction(action -> {
-            if (action.getType().isShiftClick()) {
+            GuiElement button = new DisplayGuiElement(c, collectButton);
+            button.setAction(action -> {
                 InventoryUtil.addItems(action.getWhoClicked(), postalPackage.content().items());
                 userState.removePackage(postalPackage.id());
-            } else {
-                createParcelCollectionUi(userState, postalPackage).show(action.getWhoClicked());
-            }
-            return true;
+                return true;
+            });
+            return button;
         });
-        return element;
     }
 
 
@@ -227,23 +225,26 @@ public class PostOfficeMenu {
         GuiElement element = new DisplayGuiElement(c, itemStack);
         element.setAction(action -> {
             action.getGui().close(false);
-            createParcelListUi(userState.packages()).show(action.getWhoClicked());
+            createParcelListUi(userState.getUuid()).show(action.getWhoClicked());
             return true;
         });
         return element;
     }
 
-    private GuiElement elementPackages(char c, Collection<PostalPackage> packages) {
-        GuiElementGroup group = new GuiElementGroup(c);
-        int i = 1;
-        for (PostalPackage postalPackage : packages) {
-            group.addElement(elementPackageIcon('a', i, postalPackage));
-            i += 1;
-        }
-        return group;
+    private GuiElement elementPackages(char c, UUID user) {
+        return new DynamicGuiElement(c, human -> {
+            GuiElementGroup group = new GuiElementGroup('a');
+            int i = 1;
+            UserState userState = this.dataStore.getOrCreateUserState(user);
+            for (PostalPackage postalPackage : userState.packages()) {
+                group.addElement(elementPackageIcon('a', i, userState, postalPackage));
+                i += 1;
+            }
+            return group;
+        });
     }
 
-    private GuiElement elementPackageIcon(char c, int index, PostalPackage postalPackage) {
+    private GuiElement elementPackageIcon(char c, int index, UserState userState, PostalPackage postalPackage) {
         String date = DATE_FORMAT.format(postalPackage.expiryDate());
         PackageContent content = postalPackage.content();
         Server server = this.plugin.getServer();
@@ -262,7 +263,20 @@ public class PostOfficeMenu {
                 .decoration(TextDecoration.ITALIC, false);
         meta.lore(List.of(displaySender, displayNumItems, displayExpiryDate));
         itemStack.setItemMeta(meta);
-        return new DisplayGuiElement(c, itemStack);
+        GuiElement element = new DisplayGuiElement(c, itemStack);
+        element.setAction(action -> {
+            HumanEntity who = action.getWhoClicked();
+            if (action.getType().isShiftClick()) {
+                InventoryUtil.addItems(who, postalPackage.content().items());
+                userState.removePackage(postalPackage.id());
+                action.getGui().removeElement(element);
+                action.getGui().draw();
+            } else {
+                createParcelCollectionUi(userState, postalPackage).show(action.getWhoClicked());
+            }
+            return true;
+        });
+        return element;
     }
 
     private GuiElement elementNext(char c) {
@@ -314,15 +328,21 @@ public class PostOfficeMenu {
             }
             // Clear the storage inv here
             storageInv.clear();
-            action.getGui().close(true);
+            action.getGui().close(action.getWhoClicked(), false);
             Prompt prompt = new PostPrompt(items, this.postalPackageFactory, this.plugin.getServer());
             Conversation conversation = this.conversationFactory.withFirstPrompt(prompt)
                     .withEscapeSequence("cancel")
                     .withTimeout(60)
                     .buildConversation(conversable);
-            conversation.addConversationAbandonedListener(unused -> {
-                // If the conversation is abandoned, give the items back to the player
-                InventoryUtil.addItems(action.getWhoClicked(), items);
+            conversation.addConversationAbandonedListener(event -> {
+                if (!event.gracefulExit()) {
+                    // If the conversation is abandoned, give the items back to the player
+                    InventoryUtil.addItems(action.getWhoClicked(), items);
+                }
+                Conversable who = event.getContext().getForWhom();
+                if (who instanceof HumanEntity humanEntity) {
+                    InventoryGui.goBack(humanEntity);
+                }
             });
             // Start conversation to send
             conversation.begin();
