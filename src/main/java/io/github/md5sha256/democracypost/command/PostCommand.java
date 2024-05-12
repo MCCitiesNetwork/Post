@@ -1,7 +1,7 @@
 package io.github.md5sha256.democracypost.command;
 
 import de.themoep.inventorygui.InventoryGui;
-import io.github.md5sha256.democracypost.PostOfficeMenu;
+import io.github.md5sha256.democracypost.ui.PostOfficeMenu;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;

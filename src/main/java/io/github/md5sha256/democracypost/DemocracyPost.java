@@ -3,6 +3,9 @@ package io.github.md5sha256.democracypost;
 import io.github.md5sha256.democracypost.command.PostCommand;
 import io.github.md5sha256.democracypost.database.FlatFileUserDataStore;
 import io.github.md5sha256.democracypost.database.UserDataStore;
+import io.github.md5sha256.democracypost.model.PostalPackageFactory;
+import io.github.md5sha256.democracypost.model.SimplePostalPackageFactory;
+import io.github.md5sha256.democracypost.ui.PostOfficeMenu;
 import io.papermc.paper.util.Tick;
 import org.bukkit.plugin.java.JavaPlugin;
 

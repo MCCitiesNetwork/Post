@@ -1,4 +1,4 @@
-package io.github.md5sha256.democracypost;
+package io.github.md5sha256.democracypost.ui;
 
 import org.bukkit.Location;
 import org.bukkit.entity.HumanEntity;

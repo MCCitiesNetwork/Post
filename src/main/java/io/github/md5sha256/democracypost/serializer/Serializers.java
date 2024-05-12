@@ -1,6 +1,6 @@
 package io.github.md5sha256.democracypost.serializer;
 
-import io.github.md5sha256.democracypost.PostalPackage;
+import io.github.md5sha256.democracypost.model.PostalPackage;
 import io.github.md5sha256.democracypost.database.UserState;
 import org.bukkit.inventory.ItemStack;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;

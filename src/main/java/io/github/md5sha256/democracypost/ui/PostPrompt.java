@@ -1,5 +1,6 @@
-package io.github.md5sha256.democracypost;
+package io.github.md5sha256.democracypost.ui;
 
+import io.github.md5sha256.democracypost.model.PostalPackageFactory;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
 import org.bukkit.conversations.Conversable;

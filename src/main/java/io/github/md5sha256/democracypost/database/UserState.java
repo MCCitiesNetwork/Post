@@ -1,6 +1,6 @@
 package io.github.md5sha256.democracypost.database;
 
-import io.github.md5sha256.democracypost.PostalPackage;
+import io.github.md5sha256.democracypost.model.PostalPackage;
 
 import javax.annotation.Nonnull;
 import java.time.Instant;

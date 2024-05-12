@@ -1,7 +1,7 @@
 package io.github.md5sha256.democracypost.database;
 
-import io.github.md5sha256.democracypost.PostalPackage;
-import io.github.md5sha256.democracypost.PostalPackageFactory;
+import io.github.md5sha256.democracypost.model.PostalPackage;
+import io.github.md5sha256.democracypost.model.PostalPackageFactory;
 import io.github.md5sha256.democracypost.serializer.Serializers;
 import org.bukkit.Server;
 import org.bukkit.plugin.Plugin;

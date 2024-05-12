@@ -1,4 +1,4 @@
-package io.github.md5sha256.democracypost;
+package io.github.md5sha256.democracypost.model;
 
 import org.bukkit.inventory.ItemStack;
 

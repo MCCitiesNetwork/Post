@@ -1,4 +1,4 @@
-package io.github.md5sha256.democracypost;
+package io.github.md5sha256.democracypost.ui;
 
 import de.themoep.inventorygui.GuiElement;
 import org.bukkit.entity.HumanEntity;

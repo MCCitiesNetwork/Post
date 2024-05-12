@@ -1,4 +1,4 @@
-package io.github.md5sha256.democracypost;
+package io.github.md5sha256.democracypost.ui;
 
 import de.themoep.inventorygui.DynamicGuiElement;
 import de.themoep.inventorygui.GuiBackElement;
@@ -10,6 +10,9 @@ import de.themoep.inventorygui.InventoryGui;
 import de.themoep.inventorygui.StaticGuiElement;
 import io.github.md5sha256.democracypost.database.UserDataStore;
 import io.github.md5sha256.democracypost.database.UserState;
+import io.github.md5sha256.democracypost.model.PackageContent;
+import io.github.md5sha256.democracypost.model.PostalPackage;
+import io.github.md5sha256.democracypost.model.PostalPackageFactory;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
