@@ -17,6 +17,7 @@ public class Serializers {
     @Nonnull
     public static TypeSerializerCollection defaults() {
         return TypeSerializerCollection.defaults().childBuilder()
+                .register(ScalarComponentSerializer.forMiniMessage())
                 .registerExact(Date.class, new DateSerializer())
                 .registerExact(ItemStack.class, new ItemStackSerializer())
                 .registerExact(PostalPackage.class, new PostalPackageSerializer())

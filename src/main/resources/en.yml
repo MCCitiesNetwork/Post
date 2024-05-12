@@ -1,19 +1,20 @@
 messages:
-  prefix: "&8[&aPost&8]&7 "
-  player: "&6Hello! Please send the player name or cancel to cancel."
-  errors:
-    database: "&cA database error has occurred. I can't fetch your mailbox. Please try again later."
-    command: "&cUsage: /%label% [mailbox/send] [player]"
-    no-cmd-perm: "&cCommand not found or you don't have permission to use it."
-    empty: "&cYou can't send an empty package. Aborting."
-    player_not_found: "&cPlayer not found."
-    not_your_mailbox: "&cYou can't use a someone else's mailbox."
-  menu:
-    mailbox: "&eMailbox"
-    other: "&e%player%'s Mailbox"
-    send: "&eSend package"
-  sent: "&ePackage successfully sent to %target%."
-  received: "&eYou have received a new package from %sender%."
-  claimed: "&ePackage successfully claimed."
-  mailbox: "&cYou received a mailbox."
-  unclaimed: "&cThe user didn't claimed a package so it has been returned to you."
+    prefix: '<dark_gray>[</dark_gray><green>Post</green><dark_gray>]</dark_gray><gray> '
+    player: <gold>Hello! Please send the player name or cancel to cancel.
+    errors:
+        database: <red>A database error has occurred. I can't fetch your mailbox.
+            Please try again later.
+        command: '<red>Usage: /%label% [mailbox/send] [player]'
+        no-cmd-perm: <red>Command not found or you don't have permission to use it.
+        empty: <red>You can't send an empty package. Aborting.
+        player_not_found: <red>Player not found.
+        not_your_mailbox: <red>You can't use a someone else's mailbox.
+    menu:
+        mailbox: <yellow>Mailbox
+        other: <yellow>%player%'s Mailbox
+        send: <yellow>Send package
+    sent: <yellow>Package successfully sent to %target%.
+    received: <yellow>You have received a new package from %sender%.
+    claimed: <yellow>Package successfully claimed.
+    mailbox: <red>You received a mailbox.
+    unclaimed: <red>The user didn't claimed a package so it has been returned to you.
