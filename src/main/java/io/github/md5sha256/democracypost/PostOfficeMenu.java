@@ -30,8 +30,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 import javax.annotation.Nonnull;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.List;
 import java.util.UUID;
 
@@ -132,21 +134,23 @@ public class PostOfficeMenu {
     }
 
 
+    @Nonnull
     public InventoryGui createParcelListUi(UUID user) {
         String[] rows = new String[]{
                 "         ",
                 " ddddddd ",
                 " ddddddd ",
                 " ddddddd ",
-                "  b e n  ",
+                " b p n e ",
         };
         return new InventoryGui(
                 this.plugin,
                 "Parcels",
                 rows,
                 elementPanes(' '),
+                elementBack('b'),
+                elementPrevious('p'),
                 elementNext('n'),
-                elementPrevious('b'),
                 elementExit('e'),
                 elementPackages('d', user)
         );
@@ -223,7 +227,6 @@ public class PostOfficeMenu {
         itemStack.setItemMeta(meta);
         GuiElement element = new DisplayGuiElement(c, itemStack);
         element.setAction(action -> {
-            action.getGui().close(false);
             createParcelListUi(userState.getUuid()).show(action.getWhoClicked());
             return true;
         });
@@ -305,49 +308,67 @@ public class PostOfficeMenu {
         itemStack.setItemMeta(meta);
         StaticGuiElement element = new StaticGuiElement(c, itemStack);
         element.setAction(action -> {
-            // Don't clear the storage inv, items will be added back
-            if (!(action.getWhoClicked() instanceof Conversable conversable)) {
-                return true;
-            }
-            List<ItemStack> items = new ArrayList<>();
-            for (ItemStack item : storageInv.getStorageContents()) {
-                if (item != null) {
-                    items.add(item);
-                }
-            }
-            if (items.isEmpty()) {
-                ItemMeta updated = itemStack.getItemMeta();
-                updated.lore(List.of(Component.text("Cannot send empty parcels!", NamedTextColor.RED)
-                        .decoration(TextDecoration.BOLD, true)
-                        .decoration(TextDecoration.ITALIC, false)));
-                itemStack.setItemMeta(updated);
-                element.setItem(itemStack);
-                action.getGui().draw();
-                return true;
-            }
-            // Clear the storage inv here
-            storageInv.clear();
-            action.getGui().close(action.getWhoClicked(), false);
-            Prompt prompt = new PostPrompt(items, this.postalPackageFactory, this.plugin.getServer());
-            Conversation conversation = this.conversationFactory.withFirstPrompt(prompt)
-                    .withEscapeSequence("cancel")
-                    .withTimeout(60)
-                    .buildConversation(conversable);
-            conversation.addConversationAbandonedListener(event -> {
-                if (!event.gracefulExit()) {
-                    // If the conversation is abandoned, give the items back to the player
-                    InventoryUtil.addItems(action.getWhoClicked(), items);
-                }
-                Conversable who = event.getContext().getForWhom();
-                if (who instanceof HumanEntity humanEntity) {
-                    InventoryGui.goBack(humanEntity);
-                }
-            });
-            // Start conversation to send
-            conversation.begin();
+            processPost(action, element, itemStack, storageInv);
             return true;
         });
         return element;
+    }
+
+    private void processPost(
+            GuiElement.Click action,
+            StaticGuiElement element,
+            ItemStack display,
+            Inventory storageInv) {
+        // Don't clear the storage inv, items will be added back
+        if (!(action.getWhoClicked() instanceof Conversable conversable)) {
+            return;
+        }
+        List<ItemStack> items = new ArrayList<>();
+        for (ItemStack item : storageInv.getStorageContents()) {
+            if (item != null) {
+                items.add(item);
+            }
+        }
+        if (items.isEmpty()) {
+            ItemMeta updated = display.getItemMeta();
+            updated.lore(List.of(Component.text("Cannot send empty parcels!", NamedTextColor.RED)
+                    .decoration(TextDecoration.BOLD, true)
+                    .decoration(TextDecoration.ITALIC, false)));
+            display.setItemMeta(updated);
+            element.setItem(display);
+            action.getGui().draw();
+            return;
+        }
+        // Clear the storage inv here
+        storageInv.clear();
+        // Copy the current history
+        Deque<InventoryGui> history = new ArrayDeque<>(InventoryGui.getHistory(action.getWhoClicked()));
+        // Remove the current UI so it isn't added back
+        history.pollLast();
+        action.getGui().close(action.getWhoClicked(), true);
+        while (!history.isEmpty()) {
+            InventoryGui.addHistory(action.getWhoClicked(), history.pollFirst());
+        }
+        Prompt prompt = new PostPrompt(items, this.postalPackageFactory, this.plugin.getServer());
+        Conversation conversation = this.conversationFactory.withFirstPrompt(prompt)
+                .withEscapeSequence("cancel")
+                .withTimeout(60)
+                .buildConversation(conversable);
+        conversation.addConversationAbandonedListener(event -> {
+            if (!event.gracefulExit()) {
+                // If the conversation is abandoned, give the items back to the player
+                InventoryUtil.addItems(action.getWhoClicked(), items);
+            }
+            Conversable who = event.getContext().getForWhom();
+            if (who instanceof HumanEntity humanEntity) {
+                InventoryGui previous = InventoryGui.getHistory(humanEntity).pollLast();
+                if (previous != null) {
+                    previous.show(humanEntity, false);
+                }
+            }
+        });
+        // Start conversation to send
+        conversation.begin();
     }
 
     private GuiStorageElement elementDrop(char c, Inventory inventory) {
@@ -378,7 +399,7 @@ public class PostOfficeMenu {
         return new StaticGuiElement(c,
                 itemStack,
                 click -> {
-                    click.getGui().close();
+                    click.getGui().close(true);
                     return false;
                 }, LegacyComponentSerializer.legacySection().serialize(displayName));
     }
