@@ -38,6 +38,15 @@ dependencies {
     implementation("de.themoep:inventorygui:1.6.1-SNAPSHOT")
     implementation("org.spongepowered:configurate-yaml:4.1.2")
     implementation("org.spongepowered:configurate-gson:4.1.2")
+    implementation("org.incendo:cloud-paper:2.0.0-beta.5") {
+        exclude("com.google.guava")
+    }
+    implementation("org.incendo:cloud-processors-confirmation:1.0.0-beta.2") {
+        exclude("com.google.guava")
+    }
+    implementation("org.incendo:cloud-annotations:2.0.0-beta.2") {
+        exclude("com.google.guava")
+    }
 }
 
 val targetJavaVersion = 17
@@ -55,6 +64,15 @@ tasks {
         filesMatching("plugin.yml") {
             expand("version" to project.version)
         }
+    }
+    shadowJar {
+        val path = "io.github.md5sha256.democracypost.libraries"
+        relocate("org.incendo.cloud", "${path}.cloud")
+        relocate("io.leangen.geantyref", "${path}.geantyref")
+        relocate("org.spongepowered", "${path}.spongepowered")
+        relocate("org.yaml.snakeyaml", "${path}.snakeyaml")
+        relocate("com.google.gson", "${path}.gson")
+        relocate("de.themoep.inventorygui", "${path}.inventorygui")
     }
     runServer {
         minecraftVersion("1.20.4")

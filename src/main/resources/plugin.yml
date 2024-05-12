@@ -3,3 +3,11 @@ version: '${version}'
 main: io.github.md5sha256.democracypost.DemocracyPost
 api-version: '1.20'
 authors: [andrewandy]
+
+commands:
+  post open:
+    description: "Display a user's post box for them"
+    permission: "democracypost.post.open"
+  post view:
+    description: "View a user's post box"
+    permission: "democracypost.view"

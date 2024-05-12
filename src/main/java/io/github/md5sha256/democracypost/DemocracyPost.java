@@ -1,5 +1,6 @@
 package io.github.md5sha256.democracypost;
 
+import io.github.md5sha256.democracypost.command.PostCommand;
 import io.github.md5sha256.democracypost.database.FlatFileUserDataStore;
 import io.github.md5sha256.democracypost.database.UserDataStore;
 import io.papermc.paper.util.Tick;
@@ -15,6 +16,8 @@ import java.util.concurrent.TimeUnit;
 public final class DemocracyPost extends JavaPlugin {
 
     private UserDataStore dataStore;
+    private PostalPackageFactory postalPackageFactory;
+    private PostOfficeMenu postOfficeMenu;
 
     @Override
     public void onLoad() {
@@ -31,8 +34,9 @@ public final class DemocracyPost extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        this.postalPackageFactory = new SimplePostalPackageFactory(this.dataStore, Duration.ofMinutes(3));
+        this.postOfficeMenu = new PostOfficeMenu(this, this.dataStore, this.postalPackageFactory);
         // Plugin startup logic
-        getServer().getPluginManager().registerEvents(new PlayerListener(this, this.dataStore), this);
         int saveDurationTicks = Tick.tick().fromDuration(
                 Duration.of(10, TimeUnit.MINUTES.toChronoUnit()));
         getServer().getScheduler().runTaskTimer(
@@ -46,6 +50,7 @@ public final class DemocracyPost extends JavaPlugin {
                 saveDurationTicks,
                 saveDurationTicks
         );
+        new PostCommand(this, this.postOfficeMenu);
     }
 
 
