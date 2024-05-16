@@ -14,6 +14,8 @@ import io.github.md5sha256.democracypost.localization.MessageContainer;
 import io.github.md5sha256.democracypost.model.PackageContent;
 import io.github.md5sha256.democracypost.model.PostalPackage;
 import io.github.md5sha256.democracypost.model.PostalPackageFactory;
+import io.github.md5sha256.democracypost.util.InventoryUtil;
+import io.github.md5sha256.democracypost.util.PostPackageUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -184,8 +186,7 @@ public class PostOfficeMenu {
             collectButton.setItemMeta(meta);
             GuiElement button = new DisplayGuiElement(c, collectButton);
             button.setAction(action -> {
-                InventoryUtil.addItems(action.getWhoClicked(), postalPackage.content().items());
-                userState.removePackage(postalPackage.id());
+                PostPackageUtil.postPackage(action.getWhoClicked(), postalPackage, userState);
                 return true;
             });
             return button;
@@ -281,8 +282,7 @@ public class PostOfficeMenu {
         element.setAction(action -> {
             HumanEntity who = action.getWhoClicked();
             if (action.getType().isShiftClick()) {
-                InventoryUtil.addItems(who, postalPackage.content().items());
-                userState.removePackage(postalPackage.id());
+                PostPackageUtil.postPackage(who, postalPackage, userState);
                 action.getGui().removeElement(element);
                 action.getGui().draw();
             } else {

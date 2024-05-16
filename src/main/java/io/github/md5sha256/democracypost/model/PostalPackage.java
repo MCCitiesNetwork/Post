@@ -1,6 +1,7 @@
 package io.github.md5sha256.democracypost.model;
 
 import javax.annotation.Nonnull;
+import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
 
@@ -53,5 +54,9 @@ public class PostalPackage {
 
     public void setClaimed() {
         this.claimed = true;
+    }
+
+    public boolean expired() {
+        return this.expiryDate.after(Date.from(Instant.now()));
     }
 }
