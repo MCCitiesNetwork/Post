@@ -9,8 +9,8 @@ import java.util.UUID;
 public interface PostalPackageFactory {
 
     @Nonnull
-    PostalPackage createPackage(@Nonnull UUID sender, @Nonnull UUID recipient, @Nonnull List<ItemStack> contents);
+    PostalPackage createPackage(@Nonnull UUID sender, @Nonnull UUID recipient, @Nonnull List<ItemStack> contents, boolean isReturn);
 
-    void createAndPostPackage(@Nonnull UUID sender, @Nonnull UUID recipient, @Nonnull List<ItemStack> contents);
+    void createAndPostPackage(@Nonnull UUID sender, @Nonnull UUID recipient, @Nonnull List<ItemStack> contents, boolean isReturn);
 
 }

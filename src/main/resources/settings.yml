@@ -1,4 +1,4 @@
-ui:
+ui-settings:
   exit-button-material: BARRIER
   back-button-material: BARRIER
   next-button-material: BOOK
@@ -7,3 +7,9 @@ ui:
   packages-icon-head-id: '54098'
   collect-package-head-id: '22840'
   send-package-head-id: '24849'
+
+post-settings:
+  package-expiry-seconds: 604800
+  return-package-expiry-seconds: 2592000
+
+save-duration-seconds: 600

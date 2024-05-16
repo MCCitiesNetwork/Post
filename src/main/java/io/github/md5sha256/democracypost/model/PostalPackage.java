@@ -10,27 +10,26 @@ public class PostalPackage {
     private final UUID id;
     private final Date expiryDate;
     private final PackageContent content;
-    private boolean claimed;
+    private final boolean isReturnPackage;
 
 
-    public PostalPackage(@Nonnull Date expiryDate, @Nonnull PackageContent content) {
-        this(UUID.randomUUID(), expiryDate, content);
+    public PostalPackage(@Nonnull Date expiryDate, @Nonnull PackageContent content, boolean isReturnPackage) {
+        this(UUID.randomUUID(), expiryDate, content, isReturnPackage);
     }
 
-    public PostalPackage(@Nonnull UUID id, @Nonnull Date expiryDate, @Nonnull PackageContent content) {
-        this(id, expiryDate, content, false);
-    }
-
-    public PostalPackage(@Nonnull UUID id, @Nonnull Date expiryDate, @Nonnull PackageContent content, boolean claimed) {
+    public PostalPackage(@Nonnull UUID id,
+                         @Nonnull Date expiryDate,
+                         @Nonnull PackageContent content,
+                         boolean isReturnPackage) {
         this.id = id;
         this.expiryDate = expiryDate;
         this.content = content;
-        this.claimed = claimed;
+        this.isReturnPackage = isReturnPackage;
     }
 
     @Nonnull
     public PostalPackage deepCopy() {
-        return new PostalPackage(this.id, this.expiryDate, this.content.deepCopy(), this.claimed);
+        return new PostalPackage(this.id, this.expiryDate, this.content.deepCopy(), this.isReturnPackage);
     }
 
     @Nonnull
@@ -48,12 +47,8 @@ public class PostalPackage {
         return this.content;
     }
 
-    public boolean claimed() {
-        return this.claimed;
-    }
-
-    public void setClaimed() {
-        this.claimed = true;
+    public boolean isReturnPackage() {
+        return this.isReturnPackage;
     }
 
     public boolean expired() {

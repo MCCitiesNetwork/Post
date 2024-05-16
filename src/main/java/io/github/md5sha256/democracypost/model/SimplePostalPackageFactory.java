@@ -15,28 +15,36 @@ public class SimplePostalPackageFactory implements PostalPackageFactory {
 
     private final UserDataStore dataStore;
     private Duration expiryDuration;
+    private Duration returnPackageExpiryDuration;
 
-    public SimplePostalPackageFactory(@Nonnull UserDataStore dataStore, @Nonnull Duration expiryDuration) {
+    public SimplePostalPackageFactory(
+            @Nonnull UserDataStore dataStore,
+            @Nonnull Duration expiryDuration,
+            @Nonnull Duration returnPackageExpiryDuration
+    ) {
         this.dataStore = dataStore;
         this.expiryDuration = expiryDuration;
-    }
-
-    public void setExpiryDuration(@Nonnull Duration duration) {
-        this.expiryDuration = duration;
+        this.returnPackageExpiryDuration = returnPackageExpiryDuration;
     }
 
     @NotNull
     @Override
     public PostalPackage createPackage(@NotNull UUID sender,
                                        @NotNull UUID recipient,
-                                       @NotNull List<ItemStack> contents) {
+                                       @NotNull List<ItemStack> contents,
+                                       boolean isReturnPackage) {
         PackageContent content = new PackageContent(sender, recipient, contents);
-        Date expiry = Date.from(Instant.now().plus(this.expiryDuration));
-        return new PostalPackage(expiry, content);
+        Duration duration = isReturnPackage ? this.returnPackageExpiryDuration : this.expiryDuration;
+        Date expiry = Date.from(Instant.now().plus(duration));
+        return new PostalPackage(expiry, content, isReturnPackage);
     }
 
     @Override
-    public void createAndPostPackage(@NotNull UUID sender, @NotNull UUID recipient, @NotNull List<ItemStack> contents) {
-        this.dataStore.getOrCreateUserState(sender).addPackage(createPackage(sender, recipient, contents));
+    public void createAndPostPackage(@NotNull UUID sender,
+                                     @NotNull UUID recipient,
+                                     @NotNull List<ItemStack> contents,
+                                     boolean isReturnPackage) {
+        this.dataStore.getOrCreateUserState(sender)
+                .addPackage(createPackage(sender, recipient, contents, isReturnPackage));
     }
 }

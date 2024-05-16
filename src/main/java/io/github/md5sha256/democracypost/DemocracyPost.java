@@ -10,7 +10,6 @@ import io.github.md5sha256.democracypost.model.SimplePostalPackageFactory;
 import io.github.md5sha256.democracypost.serializer.Serializers;
 import io.github.md5sha256.democracypost.ui.PostOfficeMenu;
 import io.github.md5sha256.democracypost.ui.UiItemFactory;
-import io.github.md5sha256.democracypost.ui.UiSettings;
 import io.papermc.paper.util.Tick;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.spongepowered.configurate.ConfigurationNode;
@@ -32,17 +31,18 @@ public final class DemocracyPost extends JavaPlugin {
     private PostalPackageFactory postalPackageFactory;
     private PostOfficeMenu postOfficeMenu;
     private MessageContainer messageContainer;
-    private UiSettings uiSettings;
+    private Settings settings;
     private UiItemFactory itemFactory;
 
     @Override
     public void onLoad() {
         try {
             initDataFolder();
+            this.messageContainer = loadMessages();
+            this.settings = loadSettings();
+            this.postalPackageFactory = initPostalPackageFactory();
             this.dataStore = initDataStore();
             this.dataStore.init();
-            this.messageContainer = loadMessages();
-            this.uiSettings = loadUiSettings();
         } catch (IOException ex) {
             ex.printStackTrace();
             getLogger().severe("Failed to initialize!");
@@ -55,8 +55,7 @@ public final class DemocracyPost extends JavaPlugin {
         if (!isEnabled()) {
             return;
         }
-        this.postalPackageFactory = new SimplePostalPackageFactory(this.dataStore, Duration.ofMinutes(3));
-        this.itemFactory = new UiItemFactory(this.uiSettings);
+        this.itemFactory = new UiItemFactory(this.settings.uiSettings());
         this.postOfficeMenu = new PostOfficeMenu(
                 this,
                 this.dataStore,
@@ -69,8 +68,7 @@ public final class DemocracyPost extends JavaPlugin {
             getServer().getPluginManager().registerEvents(new HeadDatabaseListener(this.itemFactory), this);
         }
         // Plugin startup logic
-        int saveDurationTicks = Tick.tick().fromDuration(
-                Duration.of(10, TimeUnit.MINUTES.toChronoUnit()));
+        int saveDurationTicks = Tick.tick().fromDuration(this.settings.savePeriodDuration());
         getServer().getScheduler().runTaskTimer(
                 this,
                 () -> {
@@ -83,6 +81,15 @@ public final class DemocracyPost extends JavaPlugin {
                 saveDurationTicks
         );
         new PostCommand(this, this.postOfficeMenu);
+    }
+
+    private PostalPackageFactory initPostalPackageFactory() {
+        PostSettings postSettings = this.settings.postSettings();
+        return new SimplePostalPackageFactory(
+                this.dataStore,
+                postSettings.packageExpiryDuration(),
+                postSettings.returnPackageExpiryDuration()
+        );
     }
 
     private ConfigurationNode copyDefaultsYaml(@Nonnull String resourceName) throws IOException {
@@ -120,9 +127,9 @@ public final class DemocracyPost extends JavaPlugin {
         return container;
     }
 
-    private UiSettings loadUiSettings() throws IOException {
+    private Settings loadSettings() throws IOException {
         ConfigurationNode settingsRoot = copyDefaultsYaml("settings");
-        return settingsRoot.node("ui").get(UiSettings.class);
+        return settingsRoot.get(Settings.class);
     }
 
 
@@ -141,9 +148,7 @@ public final class DemocracyPost extends JavaPlugin {
         if (!dataStoreFolder.isDirectory()) {
             Files.createDirectory(dataStoreFolder.toPath());
         }
-        return new FlatFileUserDataStore(this,
-                new SimplePostalPackageFactory(this.dataStore, Duration.ofSeconds(30)),
-                dataStoreFolder.toPath());
+        return new FlatFileUserDataStore(this, this.postalPackageFactory, dataStoreFolder.toPath());
     }
 
     private void initDataFolder() throws IOException {

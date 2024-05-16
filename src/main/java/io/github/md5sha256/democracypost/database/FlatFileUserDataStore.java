@@ -228,7 +228,7 @@ public class FlatFileUserDataStore implements UserDataStore {
                     // Drop parcel if this is already a return package
                     continue;
                 }
-                this.postalPackageFactory.createAndPostPackage(uuid, uuid, expiredPackage.content().items());
+                this.postalPackageFactory.createAndPostPackage(uuid, uuid, expiredPackage.content().items(), true);
             }
         }
     }

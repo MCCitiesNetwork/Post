@@ -56,7 +56,7 @@ public class PostPrompt extends StringPrompt {
             sender.sendRawMessage("You can't mail a parcel to yourself!");
             return this;
         }
-        this.postalPackageFactory.createAndPostPackage(player.getUniqueId(), recipient, this.contents);
+        this.postalPackageFactory.createAndPostPackage(player.getUniqueId(), recipient, this.contents, false);
         sender.sendRawMessage("Parcel mailed!");
         return END_OF_CONVERSATION;
     }
