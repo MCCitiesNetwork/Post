@@ -4,17 +4,20 @@ messages:
     errors:
         database: <red>A database error has occurred. I can't fetch your mailbox.
             Please try again later.
-        command: '<red>Usage: /%label% [mailbox/send] [player]'
-        no-cmd-perm: <red>Command not found or you don't have permission to use it.
-        empty: <red>You can't send an empty package. Aborting.
-        player_not_found: <red>Player not found.
-        not_your_mailbox: <red>You can't use a someone else's mailbox.
-    menu:
-        mailbox: <yellow>Mailbox
-        other: <yellow>%player%'s Mailbox
-        send: <yellow>Send package
+        empty: <red>You can't send an empty package!
     sent: <yellow>Package successfully sent to %target%.
     received: <yellow>You have received a new package from %sender%.
     claimed: <yellow>Package successfully claimed.
     mailbox: <red>You received a mailbox.
     unclaimed: <red>The user didn't claimed a package so it has been returned to you.
+menu:
+    main:
+        title: <blue><bold>POST <gray>>>></gray> Main Menu
+
+    parcel:
+        drop: <yellow>Parcel Drop
+        collection: <yellow>Parcel Collection
+        list: <yellow>%player%'s Parcels
+
+    mailbox:
+        title: <yellow>%player%'s Mailbox

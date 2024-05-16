@@ -35,6 +35,7 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
+    compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
     implementation("de.themoep:inventorygui:1.6.1-SNAPSHOT")
     implementation("org.spongepowered:configurate-yaml:4.1.2")
     implementation("org.spongepowered:configurate-gson:4.1.2")

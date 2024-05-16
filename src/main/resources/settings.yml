@@ -1,0 +1,9 @@
+ui:
+  exit-button-material: BARRIER
+  back-button-material: BARRIER
+  next-button-material: BOOK
+  previous-button-material: BOOK
+  show-packages-head-id: '54098'
+  packages-icon-head-id: '54098'
+  collect-package-head-id: '22840'
+  send-package-head-id: '24849'

@@ -4,14 +4,16 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.ComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import org.spongepowered.configurate.serialize.ScalarSerializer;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.spongepowered.configurate.ConfigurationNode;
+import org.spongepowered.configurate.ConfigurationOptions;
 import org.spongepowered.configurate.serialize.SerializationException;
+import org.spongepowered.configurate.serialize.TypeSerializer;
 
 import javax.annotation.Nonnull;
 import java.lang.reflect.Type;
-import java.util.function.Predicate;
 
-public class ScalarComponentSerializer extends ScalarSerializer<Component> {
+public class ScalarComponentSerializer implements TypeSerializer<Component> {
 
     private static final ScalarComponentSerializer LEGACY_AMPERSAND =
             new ScalarComponentSerializer(LegacyComponentSerializer.legacyAmpersand());
@@ -23,8 +25,29 @@ public class ScalarComponentSerializer extends ScalarSerializer<Component> {
     private final ComponentSerializer<Component, ? extends Component, String> serializer;
 
     public ScalarComponentSerializer(@Nonnull ComponentSerializer<Component, ? extends Component, String> serializer) {
-        super(Component.class);
         this.serializer = serializer;
+    }
+
+    @Override
+    public Component deserialize(Type type, ConfigurationNode node) throws SerializationException {
+        String s = node.getString();
+        if (s == null) {
+            return Component.empty();
+        }
+        try {
+            return this.serializer.deserialize(s);
+        } catch (Exception ex) {
+            throw new SerializationException(ex);
+        }
+    }
+
+    @Override
+    public void serialize(Type type, @Nullable Component obj, ConfigurationNode node) throws SerializationException {
+        if (obj == null) {
+            node.set(String.class, null);
+            return;
+        }
+        node.set(String.class, this.serializer.serialize(obj));
     }
 
     @Nonnull
@@ -38,22 +61,7 @@ public class ScalarComponentSerializer extends ScalarSerializer<Component> {
     }
 
     @Override
-    public Component deserialize(Type type, Object obj) throws SerializationException {
-        if (obj == null) {
-            return Component.empty();
-        }
-        if (obj instanceof String s) {
-            try {
-                return this.serializer.deserialize(s);
-            } catch (Exception ex) {
-                throw new SerializationException(ex);
-            }
-        }
-        throw new SerializationException("Unsupported type: " + type.getTypeName());
-    }
-
-    @Override
-    protected Object serialize(Component item, Predicate<Class<?>> typeSupported) {
-        return this.serializer.serialize(item);
+    public @Nullable Component emptyValue(Type specificType, ConfigurationOptions options) {
+        return Component.empty();
     }
 }

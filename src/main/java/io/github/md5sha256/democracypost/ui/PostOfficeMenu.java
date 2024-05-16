@@ -10,12 +10,14 @@ import de.themoep.inventorygui.InventoryGui;
 import de.themoep.inventorygui.StaticGuiElement;
 import io.github.md5sha256.democracypost.database.UserDataStore;
 import io.github.md5sha256.democracypost.database.UserState;
+import io.github.md5sha256.democracypost.localization.MessageContainer;
 import io.github.md5sha256.democracypost.model.PackageContent;
 import io.github.md5sha256.democracypost.model.PostalPackage;
 import io.github.md5sha256.democracypost.model.PostalPackageFactory;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -48,16 +50,24 @@ public class PostOfficeMenu {
     private final ConversationFactory conversationFactory;
     private final UserDataStore dataStore;
     private final PostalPackageFactory postalPackageFactory;
+    private final MessageContainer messageContainer;
+    private final InventoryGui.InventoryCreator inventoryCreator;
+    private final UiItemFactory itemFactory;
 
     public PostOfficeMenu(
             @Nonnull JavaPlugin plugin,
             @Nonnull UserDataStore dataStore,
-            @Nonnull PostalPackageFactory postalPackageFactory
+            @Nonnull PostalPackageFactory postalPackageFactory,
+            @Nonnull MessageContainer messageContainer,
+            @Nonnull UiItemFactory itemFactory
     ) {
         this.plugin = plugin;
         this.conversationFactory = new ConversationFactory(plugin);
         this.dataStore = dataStore;
         this.postalPackageFactory = postalPackageFactory;
+        this.messageContainer = messageContainer;
+        this.inventoryCreator = PaperInventoryCreator.creator(plugin.getServer());
+        this.itemFactory = itemFactory;
     }
 
     private static boolean handleInventoryClose(InventoryGui.Close close, Inventory storageInv) {
@@ -68,22 +78,27 @@ public class PostOfficeMenu {
         return true;
     }
 
+    private InventoryGui createGui(@Nonnull Component title, @Nonnull String[] rows, GuiElement... elements) {
+        String serializedTitle = MiniMessage.miniMessage().serialize(title);
+        return new InventoryGui(this.plugin, this.inventoryCreator, null, serializedTitle, rows, elements);
+    }
+
     public InventoryGui createPostUi(@Nonnull UUID user) {
         UserState userState = this.dataStore.getOrCreateUserState(user);
         String[] rows = new String[]{
                 "         ",
                 " ####### ",
                 " #p###v# ",
-                " ####### ",
+                " ###e### ",
                 "         "
         };
         // p = post, v = view packages
-        return new InventoryGui(this.plugin,
-                "POST >> Main Menu",
+        return createGui(this.messageContainer.messageFor("menu.main.title"),
                 rows,
                 elementPanes(' '),
                 new DisplayGuiElement('#', null),
-                elementPostIcon('p'),
+                elementSendPackage('p'),
+                elementExit('e'),
                 elementPackagesIcon('v', userState));
     }
 
@@ -93,20 +108,18 @@ public class PostOfficeMenu {
                 " ddddddd ",
                 " ddddddd ",
                 " ddddddd ",
-                "  b p e  ",
+                "   b p   ",
         };
         // d = space to drop
         // blank space = panes
         // b = back, p = post parcel, e = exit
         Inventory storageInv = this.plugin.getServer().createInventory(null, 9 * 3);
-        InventoryGui gui = new InventoryGui(
-                this.plugin,
-                "Parcel Drop",
+        InventoryGui gui = createGui(
+                this.messageContainer.messageFor("menu.parcel.drop"),
                 rows,
                 elementPanes(' '),
                 elementDrop('d', storageInv),
                 elementBack('b'),
-                elementExit('e'),
                 elementPost('p', storageInv)
         );
         gui.setCloseAction(close -> handleInventoryClose(close, storageInv));
@@ -119,19 +132,17 @@ public class PostOfficeMenu {
                 " ddddddd ",
                 " ddddddd ",
                 " ddddddd ",
-                "  b c e  ",
+                "   b c   ",
         };
         // d = space to drop
         // blank space = panes
         // b = back, c = collect items, e = exit
-        return new InventoryGui(
-                this.plugin,
-                "Parcel Drop",
+        return createGui(
+                this.messageContainer.messageFor("menu.parcel.collection"),
                 rows,
                 elementPanes(' '),
                 elementPackageContents('d', postalPackage),
                 elementBack('b'),
-                elementExit('e'),
                 elementCollectPackage('c', userState, postalPackage)
         );
     }
@@ -144,17 +155,15 @@ public class PostOfficeMenu {
                 " ddddddd ",
                 " ddddddd ",
                 " ddddddd ",
-                " b p n e ",
+                "  p b n  ",
         };
-        return new InventoryGui(
-                this.plugin,
-                "Parcels",
+        return createGui(
+                this.messageContainer.messageFor("menu.parcel.list"),
                 rows,
                 elementPanes(' '),
                 elementBack('b'),
                 elementPrevious('p'),
                 elementNext('n'),
-                elementExit('e'),
                 elementPackages('d', user)
         );
     }
@@ -162,7 +171,7 @@ public class PostOfficeMenu {
     private GuiElement elementCollectPackage(char c, UserState userState, PostalPackage postalPackage) {
         return new DynamicGuiElement(c, humanEntity -> {
             int size = postalPackage.content().items().size();
-            ItemStack collectButton = new ItemStack(Material.EMERALD);
+            ItemStack collectButton = this.itemFactory.createCollectPackageIcon();
             ItemMeta meta = collectButton.getItemMeta();
             Component displayName = Component.text("Collect Package", NamedTextColor.GREEN)
                     .decoration(TextDecoration.ITALIC, false);
@@ -196,10 +205,10 @@ public class PostOfficeMenu {
         return new DisplayGuiElement(c, item);
     }
 
-    private GuiElement elementPostIcon(char c) {
-        ItemStack itemStack = new ItemStack(Material.CHEST);
+    private GuiElement elementSendPackage(char c) {
+        ItemStack itemStack = this.itemFactory.createSendPackageButton();
         ItemMeta meta = itemStack.getItemMeta();
-        meta.displayName(Component.text("Post a package", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+        meta.displayName(Component.text("Send a package", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
         Component priceIndicator = Component.text("Price: $0.50", NamedTextColor.GRAY)
                 .decoration(TextDecoration.ITALIC, false);
         meta.lore(List.of(priceIndicator));
@@ -213,7 +222,7 @@ public class PostOfficeMenu {
     }
 
     private GuiElement elementPackagesIcon(char c, UserState userState) {
-        ItemStack itemStack = new ItemStack(Material.PLAYER_HEAD);
+        ItemStack itemStack = this.itemFactory.createPackagesIcon();
         ItemMeta meta = itemStack.getItemMeta();
         meta.displayName(Component.text("Open Postbox", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
         int numPackages = userState.packages().size();
@@ -285,7 +294,7 @@ public class PostOfficeMenu {
     }
 
     private GuiElement elementNext(char c) {
-        final ItemStack itemStack = new ItemStack(Material.PAPER);
+        final ItemStack itemStack = this.itemFactory.createNextButton();
         final Component displayName = Component.text("Next Page", NamedTextColor.DARK_AQUA)
                 .decoration(TextDecoration.ITALIC, false);
         return new GuiPageElement(c,
@@ -295,7 +304,7 @@ public class PostOfficeMenu {
     }
 
     private GuiElement elementPrevious(char c) {
-        final ItemStack itemStack = new ItemStack(Material.PAPER);
+        final ItemStack itemStack = this.itemFactory.createPreviousButton();
         final Component displayName = Component.text("Previous Page", NamedTextColor.DARK_AQUA)
                 .decoration(TextDecoration.ITALIC, false);
         return new GuiPageElement(c,
@@ -305,7 +314,7 @@ public class PostOfficeMenu {
     }
 
     private GuiElement elementPost(char c, Inventory storageInv) {
-        ItemStack itemStack = new ItemStack(Material.DIAMOND);
+        ItemStack itemStack = this.itemFactory.createSendPackageButton();
         ItemMeta meta = itemStack.getItemMeta();
         meta.displayName(Component.text("Post Package", NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
         itemStack.setItemMeta(meta);
@@ -388,7 +397,7 @@ public class PostOfficeMenu {
     }
 
     private GuiElement elementBack(char c) {
-        final ItemStack itemStack = new ItemStack(Material.GLOWSTONE);
+        final ItemStack itemStack = this.itemFactory.createBackButton();
         final Component displayName = Component.text("Back", NamedTextColor.RED)
                 .decoration(TextDecoration.ITALIC, false);
         return new GuiBackElement(c, itemStack, LegacyComponentSerializer.legacySection().serialize(displayName));
@@ -396,7 +405,7 @@ public class PostOfficeMenu {
 
     @Nonnull
     private GuiElement elementExit(char c) {
-        final ItemStack itemStack = new ItemStack(Material.BARRIER);
+        final ItemStack itemStack = this.itemFactory.createExitButton();
         final Component displayName = Component.text("Exit", NamedTextColor.RED)
                 .decoration(TextDecoration.ITALIC, false);
         return new StaticGuiElement(c,
