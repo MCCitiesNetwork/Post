@@ -16,12 +16,14 @@ public class PostalPackageSerializer implements TypeSerializer<PostalPackage> {
     private static final String KEY_ID = "id";
     private static final String KEY_EXPIRY_DATE = "expiry-date";
     private static final String KEY_CONTENT = "content";
+    private static final String KEY_RETURN_PACKAGE = "return-package";
 
     @Override
     public PostalPackage deserialize(Type type, ConfigurationNode node) throws SerializationException {
         UUID uuid = node.node(KEY_ID).get(UUID.class);
         Date expiryDate = node.node(KEY_EXPIRY_DATE).get(Date.class);
         PackageContent content = node.node(KEY_CONTENT).get(PackageContent.class);
+        boolean isReturnPackage = node.node(KEY_RETURN_PACKAGE).getBoolean(false);
         if (uuid == null) {
             throw new SerializationException("Missing uuid");
         }
@@ -31,7 +33,7 @@ public class PostalPackageSerializer implements TypeSerializer<PostalPackage> {
         if (content == null) {
             throw new SerializationException("Missing content");
         }
-        return new PostalPackage(uuid, expiryDate, content);
+        return new PostalPackage(uuid, expiryDate, content, isReturnPackage);
     }
 
     @Override
@@ -47,5 +49,8 @@ public class PostalPackageSerializer implements TypeSerializer<PostalPackage> {
         node.node(KEY_ID).set(obj.id());
         node.node(KEY_EXPIRY_DATE).set(obj.expiryDate());
         node.node(KEY_CONTENT).set(obj.content());
+        if (obj.isReturnPackage()) {
+            node.node(KEY_RETURN_PACKAGE).set(true);
+        }
     }
 }
