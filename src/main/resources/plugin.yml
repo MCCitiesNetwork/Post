@@ -12,3 +12,7 @@ commands:
   post view:
     description: "View a user's post box"
     permission: "democracypost.view"
+
+libraries:
+  - 'org.mariadb.jdbc:mariadb-java-client:3.4.0'
+  - 'com.zaxxer:HikariCP:5.1.0'

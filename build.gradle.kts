@@ -36,7 +36,10 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
-    implementation("com.zaxxer:HikariCP:5.1.0")
+    // Provided by spigot library
+    compileOnly("org.mariadb.jdbc:mariadb-java-client:3.4.0")
+    compileOnly("com.zaxxer:HikariCP:5.1.0")
+    // Shaded libs
     implementation("de.themoep:inventorygui:1.6.1-SNAPSHOT")
     implementation("org.spongepowered:configurate-yaml:4.1.2")
     implementation("org.spongepowered:configurate-gson:4.1.2")
@@ -49,7 +52,6 @@ dependencies {
     implementation("org.incendo:cloud-annotations:2.0.0-beta.2") {
         exclude("com.google.guava")
     }
-    implementation("org.mariadb.jdbc:mariadb-java-client:3.4.0")
 }
 
 val targetJavaVersion = 17
