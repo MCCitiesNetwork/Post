@@ -59,8 +59,7 @@ public class MariaSchema implements DatabaseSchema {
             SET
               package_receiver = package_sender,
               package_expiry = ?
-            WHERE package_expiry >= ?
-            );
+            WHERE package_expiry >= ?;
             """;
 
     private static final String DELETE_EXPIRED_RETURN_PACKAGES = """
@@ -111,10 +110,13 @@ public class MariaSchema implements DatabaseSchema {
 
     @Override
     public void cleanupExpiredPackages(@Nonnull Connection connection) throws SQLException {
+        Timestamp now = Timestamp.from(Instant.now());
         try (PreparedStatement updateStatement = connection.prepareStatement(UPDATE_EXPIRED_PACKAGES);
-        PreparedStatement deletionStatement = connection.prepareStatement(DELETE_EXPIRED_RETURN_PACKAGES);){
+        PreparedStatement deletionStatement = connection.prepareStatement(DELETE_EXPIRED_RETURN_PACKAGES)){
+            updateStatement.setTimestamp(1, now);
+            updateStatement.setTimestamp(2, now);
             updateStatement.executeUpdate();
-            deletionStatement.setTimestamp(1, Timestamp.from(Instant.now()));
+            deletionStatement.setTimestamp(1, now);
             deletionStatement.executeUpdate();
         }
     }
