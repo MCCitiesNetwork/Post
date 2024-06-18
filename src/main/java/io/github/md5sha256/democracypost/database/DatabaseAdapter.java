@@ -27,7 +27,7 @@ public class DatabaseAdapter implements Closeable {
     public void init() throws SQLException {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(this.schema.formatJdbcUrl(this.databaseSettings.url()));
-        config.setDataSourceClassName(this.schema.dataSourceClassName());
+        config.setDriverClassName(this.schema.driverClassName());
         if (this.databaseSettings.requireAuth()) {
             config.setUsername(this.databaseSettings.username());
             config.setPassword(this.databaseSettings.password());

@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface DatabaseSchema {
 
-    @Nonnull String dataSourceClassName();
+    @Nonnull String driverClassName();
 
     @Nonnull String formatJdbcUrl(@Nonnull String url);
 

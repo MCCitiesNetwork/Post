@@ -88,7 +88,7 @@ public class MariaSchema implements DatabaseSchema {
 
     @NotNull
     @Override
-    public String dataSourceClassName() {
+    public String driverClassName() {
         return "org.mariadb.jdbc.Driver";
     }
 
