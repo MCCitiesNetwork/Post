@@ -1,28 +1,35 @@
 package io.github.md5sha256.democracypost.model;
 
+import io.github.md5sha256.democracypost.database.DatabaseAdapter;
 import io.github.md5sha256.democracypost.database.UserDataStore;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 public class SimplePostalPackageFactory implements PostalPackageFactory {
 
-    private final UserDataStore dataStore;
+    private final Plugin plugin;
+    private final DatabaseAdapter adapter;
     private Duration expiryDuration;
     private Duration returnPackageExpiryDuration;
 
     public SimplePostalPackageFactory(
-            @Nonnull UserDataStore dataStore,
+            @Nonnull Plugin plugin,
+            @Nonnull DatabaseAdapter adapter,
             @Nonnull Duration expiryDuration,
             @Nonnull Duration returnPackageExpiryDuration
     ) {
-        this.dataStore = dataStore;
+        this.plugin = plugin;
+        this.adapter = adapter;
         this.expiryDuration = expiryDuration;
         this.returnPackageExpiryDuration = returnPackageExpiryDuration;
     }
@@ -44,7 +51,14 @@ public class SimplePostalPackageFactory implements PostalPackageFactory {
                                      @NotNull UUID recipient,
                                      @NotNull List<ItemStack> contents,
                                      boolean isReturnPackage) {
-        this.dataStore.getOrCreateUserState(sender)
-                .addPackage(createPackage(sender, recipient, contents, isReturnPackage));
+        Logger logger = this.plugin.getLogger();
+        this.plugin.getServer().getScheduler().runTaskAsynchronously(this.plugin, () -> {
+            try {
+                this.adapter.addPackage(createPackage(sender, recipient, contents, isReturnPackage));
+            } catch (SQLException ex) {
+                logger.warning("Failed to post package!");
+                ex.printStackTrace();
+            }
+        });
     }
 }

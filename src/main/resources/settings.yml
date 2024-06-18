@@ -13,3 +13,10 @@ post-settings:
   return-package-expiry-seconds: 2592000
 
 save-duration-seconds: 600
+
+database-settings:
+  url: ''
+  username: ''
+  password: ''
+  require-auth: false
+  initialize-schema: true

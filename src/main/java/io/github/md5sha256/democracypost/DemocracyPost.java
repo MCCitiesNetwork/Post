@@ -1,8 +1,7 @@
 package io.github.md5sha256.democracypost;
 
 import io.github.md5sha256.democracypost.command.PostCommand;
-import io.github.md5sha256.democracypost.database.FlatFileUserDataStore;
-import io.github.md5sha256.democracypost.database.UserDataStore;
+import io.github.md5sha256.democracypost.database.DatabaseAdapter;
 import io.github.md5sha256.democracypost.heads.HeadDatabaseListener;
 import io.github.md5sha256.democracypost.localization.MessageContainer;
 import io.github.md5sha256.democracypost.model.PostalPackageFactory;
@@ -22,12 +21,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
+import java.sql.SQLException;
 
 public final class DemocracyPost extends JavaPlugin {
 
-    private UserDataStore dataStore;
+    private DatabaseAdapter databaseAdapter;
     private PostalPackageFactory postalPackageFactory;
     private PostOfficeMenu postOfficeMenu;
     private MessageContainer messageContainer;
@@ -41,9 +39,9 @@ public final class DemocracyPost extends JavaPlugin {
             this.messageContainer = loadMessages();
             this.settings = loadSettings();
             this.postalPackageFactory = initPostalPackageFactory();
-            this.dataStore = initDataStore();
-            this.dataStore.init();
-        } catch (IOException ex) {
+            this.databaseAdapter = initDatabase();
+            this.databaseAdapter.init();
+        } catch (IOException | SQLException ex) {
             ex.printStackTrace();
             getLogger().severe("Failed to initialize!");
             getServer().getPluginManager().disablePlugin(this);
@@ -58,7 +56,7 @@ public final class DemocracyPost extends JavaPlugin {
         this.itemFactory = new UiItemFactory(this.settings.uiSettings());
         this.postOfficeMenu = new PostOfficeMenu(
                 this,
-                this.dataStore,
+                this.databaseAdapter,
                 this.postalPackageFactory,
                 this.messageContainer,
                 this.itemFactory
@@ -73,8 +71,11 @@ public final class DemocracyPost extends JavaPlugin {
                 this,
                 () -> {
                     getLogger().info("Transferring expired packages...");
-                    this.dataStore.transferExpiredPackages();
-                    this.dataStore.flushAllUsersAsync();
+                    try {
+                        this.databaseAdapter.transferExpiredPackages();
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
                     getLogger().info("Changes saved!");
                 },
                 saveDurationTicks,
@@ -86,7 +87,8 @@ public final class DemocracyPost extends JavaPlugin {
     private PostalPackageFactory initPostalPackageFactory() {
         PostSettings postSettings = this.settings.postSettings();
         return new SimplePostalPackageFactory(
-                this.dataStore,
+                this,
+                this.databaseAdapter,
                 postSettings.packageExpiryDuration(),
                 postSettings.returnPackageExpiryDuration()
         );
@@ -136,19 +138,14 @@ public final class DemocracyPost extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
-        if (this.dataStore != null) {
-            // Flush all cached data synchronously
-            this.dataStore.flushAllUsers();
+        if (this.databaseAdapter != null) {
+            this.databaseAdapter.close();
         }
     }
 
     @Nonnull
-    private UserDataStore initDataStore() throws IOException {
-        File dataStoreFolder = new File(getDataFolder(), "user-data");
-        if (!dataStoreFolder.isDirectory()) {
-            Files.createDirectory(dataStoreFolder.toPath());
-        }
-        return new FlatFileUserDataStore(this, this.postalPackageFactory, dataStoreFolder.toPath());
+    private DatabaseAdapter initDatabase() throws IOException {
+        return new DatabaseAdapter(this.settings.databaseSettings());
     }
 
     private void initDataFolder() throws IOException {

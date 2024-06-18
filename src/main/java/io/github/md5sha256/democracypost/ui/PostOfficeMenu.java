@@ -8,8 +8,7 @@ import de.themoep.inventorygui.GuiPageElement;
 import de.themoep.inventorygui.GuiStorageElement;
 import de.themoep.inventorygui.InventoryGui;
 import de.themoep.inventorygui.StaticGuiElement;
-import io.github.md5sha256.democracypost.database.UserDataStore;
-import io.github.md5sha256.democracypost.database.UserState;
+import io.github.md5sha256.democracypost.database.DatabaseAdapter;
 import io.github.md5sha256.democracypost.localization.MessageContainer;
 import io.github.md5sha256.democracypost.model.PackageContent;
 import io.github.md5sha256.democracypost.model.PostalPackage;
@@ -33,8 +32,10 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitScheduler;
 
 import javax.annotation.Nonnull;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
@@ -43,6 +44,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public class PostOfficeMenu {
 
@@ -50,7 +52,7 @@ public class PostOfficeMenu {
 
     private final JavaPlugin plugin;
     private final ConversationFactory conversationFactory;
-    private final UserDataStore dataStore;
+    private final DatabaseAdapter databaseAdapter;
     private final PostalPackageFactory postalPackageFactory;
     private final MessageContainer messageContainer;
     private final InventoryGui.InventoryCreator inventoryCreator;
@@ -58,14 +60,14 @@ public class PostOfficeMenu {
 
     public PostOfficeMenu(
             @Nonnull JavaPlugin plugin,
-            @Nonnull UserDataStore dataStore,
+            @Nonnull DatabaseAdapter databaseAdapter,
             @Nonnull PostalPackageFactory postalPackageFactory,
             @Nonnull MessageContainer messageContainer,
             @Nonnull UiItemFactory itemFactory
     ) {
         this.plugin = plugin;
         this.conversationFactory = new ConversationFactory(plugin);
-        this.dataStore = dataStore;
+        this.databaseAdapter = databaseAdapter;
         this.postalPackageFactory = postalPackageFactory;
         this.messageContainer = messageContainer;
         this.inventoryCreator = PaperInventoryCreator.creator(plugin.getServer());
@@ -85,8 +87,23 @@ public class PostOfficeMenu {
         return new InventoryGui(this.plugin, this.inventoryCreator, null, serializedTitle, rows, elements);
     }
 
-    public InventoryGui createPostUi(@Nonnull UUID user) {
-        UserState userState = this.dataStore.getOrCreateUserState(user);
+    public CompletableFuture<InventoryGui> createPostUi(@Nonnull UUID user) {
+        CompletableFuture<InventoryGui> future = new CompletableFuture<>();
+        BukkitScheduler scheduler = this.plugin.getServer().getScheduler();
+        scheduler.runTaskAsynchronously(this.plugin, () -> {
+            List<PostalPackage> packages;
+            try {
+                packages = this.databaseAdapter.getPackagesForRecipient(user);
+            } catch (SQLException ex) {
+                future.completeExceptionally(ex);
+                return;
+            }
+            scheduler.runTask(this.plugin, () -> future.complete(createPostUi(packages)));
+        });
+        return future;
+    }
+
+    public InventoryGui createPostUi(List<PostalPackage> packages) {
         String[] rows = new String[]{
                 "         ",
                 " ####### ",
@@ -101,7 +118,7 @@ public class PostOfficeMenu {
                 new DisplayGuiElement('#', null),
                 elementSendPackage('p'),
                 elementExit('e'),
-                elementPackagesIcon('v', userState));
+                elementPackagesIcon('v', packages));
     }
 
     public InventoryGui createParcelPostUi() {
@@ -128,7 +145,7 @@ public class PostOfficeMenu {
         return gui;
     }
 
-    private InventoryGui createParcelCollectionUi(UserState userState, PostalPackage postalPackage) {
+    private InventoryGui createParcelCollectionUi(PostalPackage postalPackage) {
         String[] rows = new String[]{
                 "         ",
                 " ddddddd ",
@@ -145,13 +162,29 @@ public class PostOfficeMenu {
                 elementPanes(' '),
                 elementPackageContents('d', postalPackage),
                 elementBack('b'),
-                elementCollectPackage('c', userState, postalPackage)
+                elementCollectPackage('c', postalPackage)
         );
+    }
+
+    public CompletableFuture<InventoryGui> createParcelListUi(@Nonnull UUID user) {
+        CompletableFuture<InventoryGui> future = new CompletableFuture<>();
+        BukkitScheduler scheduler = this.plugin.getServer().getScheduler();
+        scheduler.runTaskAsynchronously(this.plugin, () -> {
+            List<PostalPackage> packages;
+            try {
+                packages = this.databaseAdapter.getPackagesForRecipient(user);
+            } catch (SQLException ex) {
+                future.completeExceptionally(ex);
+                return;
+            }
+            scheduler.runTask(this.plugin, () -> future.complete(createParcelListUi(packages)));
+        });
+        return future;
     }
 
 
     @Nonnull
-    public InventoryGui createParcelListUi(UUID user) {
+    public InventoryGui createParcelListUi(List<PostalPackage> packages) {
         String[] rows = new String[]{
                 "         ",
                 " ddddddd ",
@@ -166,11 +199,11 @@ public class PostOfficeMenu {
                 elementBack('b'),
                 elementPrevious('p'),
                 elementNext('n'),
-                elementPackages('d', user)
+                elementPackages('d', packages)
         );
     }
 
-    private GuiElement elementCollectPackage(char c, UserState userState, PostalPackage postalPackage) {
+    private GuiElement elementCollectPackage(char c, PostalPackage postalPackage) {
         return new DynamicGuiElement(c, humanEntity -> {
             int size = postalPackage.content().items().size();
             ItemStack collectButton = this.itemFactory.createCollectPackageIcon();
@@ -186,7 +219,12 @@ public class PostOfficeMenu {
             collectButton.setItemMeta(meta);
             GuiElement button = new DisplayGuiElement(c, collectButton);
             button.setAction(action -> {
-                PostPackageUtil.postPackage(action.getWhoClicked(), postalPackage, userState);
+                PostPackageUtil.openPackage(
+                        action.getWhoClicked(),
+                        postalPackage,
+                        this.databaseAdapter,
+                        this.plugin
+                );
                 return true;
             });
             return button;
@@ -222,15 +260,14 @@ public class PostOfficeMenu {
         return element;
     }
 
-    private GuiElement elementPackagesIcon(char c, UserState userState) {
+    private GuiElement elementPackagesIcon(char c, List<PostalPackage> packages) {
         ItemStack itemStack = this.itemFactory.createPackagesIcon();
         ItemMeta meta = itemStack.getItemMeta();
         meta.displayName(Component.text("Open Postbox", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
-        int numPackages = userState.packages().size();
+        int numPackages = packages.size();
         Component numPackagesIndicator;
         if (numPackages > 0) {
-            numPackagesIndicator = Component.text("Num packages: " + userState.packages().size(),
-                            NamedTextColor.WHITE)
+            numPackagesIndicator = Component.text("Num packages: " + numPackages, NamedTextColor.WHITE)
                     .decoration(TextDecoration.ITALIC, false);
         } else {
             numPackagesIndicator = Component.text("No unopened packages!", NamedTextColor.GREEN)
@@ -240,26 +277,25 @@ public class PostOfficeMenu {
         itemStack.setItemMeta(meta);
         GuiElement element = new DisplayGuiElement(c, itemStack);
         element.setAction(action -> {
-            createParcelListUi(userState.getUuid()).show(action.getWhoClicked());
+            createParcelListUi(packages).show(action.getWhoClicked());
             return true;
         });
         return element;
     }
 
-    private GuiElement elementPackages(char c, UUID user) {
+    private GuiElement elementPackages(char c, List<PostalPackage> packages) {
         return new DynamicGuiElement(c, human -> {
             GuiElementGroup group = new GuiElementGroup('a');
             int i = 1;
-            UserState userState = this.dataStore.getOrCreateUserState(user);
-            for (PostalPackage postalPackage : userState.packages()) {
-                group.addElement(elementPackageIcon('a', i, userState, postalPackage));
+            for (PostalPackage postalPackage : packages) {
+                group.addElement(elementPackageIcon('a', i, postalPackage));
                 i += 1;
             }
             return group;
         });
     }
 
-    private GuiElement elementPackageIcon(char c, int index, UserState userState, PostalPackage postalPackage) {
+    private GuiElement elementPackageIcon(char c, int index, PostalPackage postalPackage) {
         String date = DATE_FORMAT.format(postalPackage.expiryDate());
         PackageContent content = postalPackage.content();
         Server server = this.plugin.getServer();
@@ -282,11 +318,12 @@ public class PostOfficeMenu {
         element.setAction(action -> {
             HumanEntity who = action.getWhoClicked();
             if (action.getType().isShiftClick()) {
-                PostPackageUtil.postPackage(who, postalPackage, userState);
+                // FIXME give items to player
+                PostPackageUtil.openPackage(who, postalPackage, this.databaseAdapter, this.plugin);
                 action.getGui().removeElement(element);
                 action.getGui().draw();
             } else {
-                createParcelCollectionUi(userState, postalPackage).show(action.getWhoClicked());
+                createParcelCollectionUi(postalPackage).show(action.getWhoClicked());
             }
             return true;
         });

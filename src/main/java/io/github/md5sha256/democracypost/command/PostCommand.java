@@ -2,6 +2,8 @@ package io.github.md5sha256.democracypost.command;
 
 import de.themoep.inventorygui.InventoryGui;
 import io.github.md5sha256.democracypost.ui.PostOfficeMenu;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -40,7 +42,15 @@ public class PostCommand {
     public void commandOpen(
             @Nonnull @Argument(value = "player") Player player
     ) {
-        this.postOfficeMenu.createPostUi(player.getUniqueId()).show(player);
+        this.postOfficeMenu.createPostUi(player.getUniqueId())
+                .whenComplete((gui, throwable) -> {
+                    if (throwable != null) {
+                        player.sendMessage(Component.text("Error occurred when retrieving your packages!",
+                                NamedTextColor.RED));
+                        return;
+                    }
+                    gui.show(player);
+                });
     }
 
     @Command("post view <player>")
@@ -50,7 +60,14 @@ public class PostCommand {
             @Nonnull @Argument(value = "player") OfflinePlayer who) {
         // Prevent the sender from going "back"
         InventoryGui.clearHistory(sender);
-        this.postOfficeMenu.createParcelListUi(who.getUniqueId()).show(sender);
+        this.postOfficeMenu.createParcelListUi(who.getUniqueId()).whenComplete((gui, throwable) -> {
+            if (throwable != null) {
+                sender.sendMessage(Component.text("Error occurred when retrieving packages for " + who.getName(),
+                        NamedTextColor.RED));
+                return;
+            }
+            gui.show(sender);
+        });
     }
 
 

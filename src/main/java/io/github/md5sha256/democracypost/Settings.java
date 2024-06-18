@@ -12,6 +12,7 @@ import java.time.Duration;
 public record Settings(
         @Setting @Required @Nonnull UiSettings uiSettings,
         @Setting @Required @Nonnull PostSettings postSettings,
+        @Setting @Required @Nonnull DatabaseSettings databaseSettings,
         @Setting @Required long saveDurationSeconds) {
 
     @Nonnull
