@@ -78,7 +78,7 @@ public final class DemocracyPost extends JavaPlugin {
                     }
                     getLogger().info("Changes saved!");
                 },
-                saveDurationTicks,
+                0,
                 saveDurationTicks
         );
         new PostCommand(this, this.postOfficeMenu);

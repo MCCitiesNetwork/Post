@@ -58,13 +58,13 @@ public class MariaSchema implements DatabaseSchema {
             UPDATE POST_PACKAGE
             SET
               package_receiver = package_sender,
-              package_expiry = ?
-            WHERE package_expiry >= ?;
+              package_expiry_date = ?
+            WHERE package_expiry_date >= ?;
             """;
 
     private static final String DELETE_EXPIRED_RETURN_PACKAGES = """
             DELETE FROM POST_PACKAGE
-            WHERE package_is_return = TRUE AND package_expiry >= ?;
+            WHERE package_is_return = TRUE AND package_expiry_date >= ?;
             """;
 
     private static final String SELECT_PACKAGES_FOR_RECEIVER = """
