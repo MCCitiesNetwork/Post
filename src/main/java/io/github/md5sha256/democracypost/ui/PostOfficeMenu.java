@@ -16,7 +16,6 @@ import io.github.md5sha256.democracypost.model.PostalPackageFactory;
 import io.github.md5sha256.democracypost.util.InventoryUtil;
 import io.github.md5sha256.democracypost.util.PostPackageUtil;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -157,7 +156,7 @@ public class PostOfficeMenu {
         // blank space = panes
         // b = back, c = collect items, e = exit
         return createGui(
-                this.messageContainer.messageFor("menu.parcel.collection"),
+                this.messageContainer.messageFor("menu.parcel.collection-title"),
                 rows,
                 elementPanes(' '),
                 elementPackageContents('d', postalPackage),
@@ -208,12 +207,12 @@ public class PostOfficeMenu {
             int size = postalPackage.content().items().size();
             ItemStack collectButton = this.itemFactory.createCollectPackageIcon();
             ItemMeta meta = collectButton.getItemMeta();
-            Component displayName = Component.text("Collect Package", NamedTextColor.GREEN)
+            Component displayName = this.messageContainer.messageFor("menu.parcel.collect-parcel")
                     .decoration(TextDecoration.ITALIC, false);
             meta.displayName(displayName);
             if (humanEntity.getInventory().getSize() < size) {
-                Component warning = Component.text("Warning: insufficient inventory space!", NamedTextColor.YELLOW)
-                        .decoration(TextDecoration.ITALIC, false);
+                Component warning = this.messageContainer.messageFor("messages.insufficient-inventory-space")
+                                .decoration(TextDecoration.ITALIC, false);
                 meta.lore(List.of(warning));
             }
             collectButton.setItemMeta(meta);
@@ -247,8 +246,13 @@ public class PostOfficeMenu {
     private GuiElement elementSendPackage(char c) {
         ItemStack itemStack = this.itemFactory.createSendPackageButton();
         ItemMeta meta = itemStack.getItemMeta();
-        meta.displayName(Component.text("Send a package", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
-        Component priceIndicator = Component.text("Price: $0.50", NamedTextColor.GRAY)
+        Component displayName = this.messageContainer.messageFor("menu.parcel.post-parcel")
+                .decoration(TextDecoration.ITALIC, false);
+        meta.displayName(displayName);
+        // FIXME price
+        String formattedPrice = "0.50";
+        Component priceIndicator = this.messageContainer.messageFor("menu.parcel.post-parcel-price")
+                .replaceText(builder -> builder.matchLiteral("%price%").replacement(formattedPrice))
                 .decoration(TextDecoration.ITALIC, false);
         meta.lore(List.of(priceIndicator));
         itemStack.setItemMeta(meta);
@@ -263,14 +267,17 @@ public class PostOfficeMenu {
     private GuiElement elementPackagesIcon(char c, List<PostalPackage> packages) {
         ItemStack itemStack = this.itemFactory.createPackagesIcon();
         ItemMeta meta = itemStack.getItemMeta();
-        meta.displayName(Component.text("Open Postbox", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+        Component displayName = this.messageContainer.messageFor("menu.main.open-mailbox")
+                        .decoration(TextDecoration.ITALIC, false);
+        meta.displayName(displayName);
         int numPackages = packages.size();
         Component numPackagesIndicator;
         if (numPackages > 0) {
-            numPackagesIndicator = Component.text("Num packages: " + numPackages, NamedTextColor.WHITE)
+            numPackagesIndicator = this.messageContainer.messageFor("menu.main.unopened-packages")
+                    .replaceText(builder -> builder.matchLiteral("%packages%").replacement(String.valueOf(numPackages)))
                     .decoration(TextDecoration.ITALIC, false);
         } else {
-            numPackagesIndicator = Component.text("No unopened packages!", NamedTextColor.GREEN)
+            numPackagesIndicator = this.messageContainer.messageFor("menu.main.no-unopened-packages")
                     .decoration(TextDecoration.ITALIC, false);
         }
         meta.lore(List.of(numPackagesIndicator));
@@ -295,7 +302,7 @@ public class PostOfficeMenu {
         });
     }
 
-    private GuiElement elementPackageIcon(char c, int index, PostalPackage postalPackage) {
+    private ItemStack createPackageIcon(int index, PostalPackage postalPackage) {
         String date = DATE_FORMAT.format(postalPackage.expiryDate());
         PackageContent content = postalPackage.content();
         Server server = this.plugin.getServer();
@@ -303,22 +310,31 @@ public class PostOfficeMenu {
         String senderName = sender.getName() == null ? sender.getUniqueId().toString() : sender.getName();
         ItemStack itemStack = new ItemStack(Material.PLAYER_HEAD);
         ItemMeta meta = itemStack.getItemMeta();
-        Component displayName = Component.text("Package Number: " + index, NamedTextColor.GOLD)
+        int numItems = postalPackage.content().items().size();
+        Component displayName = this.messageContainer.messageFor("menu.parcel.package-number")
+                .replaceText(builder -> builder.matchLiteral("%number%").replacement(String.valueOf(index)))
                 .decoration(TextDecoration.ITALIC, false);
         meta.displayName(displayName);
-        Component displaySender = Component.text("From: " + senderName, NamedTextColor.WHITE)
+        Component displaySender = this.messageContainer.messageFor("menu.parcel.package-sender")
+                .replaceText(builder -> builder.matchLiteral("%player%").replacement(senderName))
                 .decoration(TextDecoration.ITALIC, false);
-        Component displayNumItems = Component.text(content.items().size() + " items")
+        Component displayNumItems = this.messageContainer.messageFor("menu.parcel.package-num-items")
+                .replaceText(builder -> builder.matchLiteral("%items%").replacement(String.valueOf(numItems)))
                 .decoration(TextDecoration.ITALIC, false);
-        Component displayExpiryDate = Component.text("Expires: " + date, NamedTextColor.YELLOW)
+        Component displayExpiryDate = this.messageContainer.messageFor("menu.parcel.package-expiry-date")
+                .replaceText(builder -> builder.matchLiteral("%date%").replacement(date))
                 .decoration(TextDecoration.ITALIC, false);
         meta.lore(List.of(displaySender, displayNumItems, displayExpiryDate));
         itemStack.setItemMeta(meta);
+        return itemStack;
+    }
+
+    private GuiElement elementPackageIcon(char c, int index, PostalPackage postalPackage) {
+        ItemStack itemStack = createPackageIcon(index, postalPackage);
         GuiElement element = new DisplayGuiElement(c, itemStack);
         element.setAction(action -> {
             HumanEntity who = action.getWhoClicked();
             if (action.getType().isShiftClick()) {
-                // FIXME give items to player
                 PostPackageUtil.openPackage(who, postalPackage, this.databaseAdapter, this.plugin);
                 action.getGui().removeElement(element);
                 action.getGui().draw();
@@ -332,7 +348,7 @@ public class PostOfficeMenu {
 
     private GuiElement elementNext(char c) {
         final ItemStack itemStack = this.itemFactory.createNextButton();
-        final Component displayName = Component.text("Next Page", NamedTextColor.DARK_AQUA)
+        final Component displayName = this.messageContainer.messageFor("menu.next-page")
                 .decoration(TextDecoration.ITALIC, false);
         return new GuiPageElement(c,
                 itemStack,
@@ -342,7 +358,7 @@ public class PostOfficeMenu {
 
     private GuiElement elementPrevious(char c) {
         final ItemStack itemStack = this.itemFactory.createPreviousButton();
-        final Component displayName = Component.text("Previous Page", NamedTextColor.DARK_AQUA)
+        final Component displayName = this.messageContainer.messageFor("menu.previous-page")
                 .decoration(TextDecoration.ITALIC, false);
         return new GuiPageElement(c,
                 itemStack,
@@ -353,7 +369,9 @@ public class PostOfficeMenu {
     private GuiElement elementPost(char c, Inventory storageInv) {
         ItemStack itemStack = this.itemFactory.createSendPackageButton();
         ItemMeta meta = itemStack.getItemMeta();
-        meta.displayName(Component.text("Post Package", NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+        Component displayName = this.messageContainer.messageFor("menu.main.post-parcel")
+                        .decoration(TextDecoration.ITALIC, false);
+        meta.displayName(displayName);
         itemStack.setItemMeta(meta);
         StaticGuiElement element = new StaticGuiElement(c, itemStack);
         element.setAction(action -> {
@@ -380,9 +398,9 @@ public class PostOfficeMenu {
         }
         if (items.isEmpty()) {
             ItemMeta updated = display.getItemMeta();
-            updated.lore(List.of(Component.text("Cannot send empty parcels!", NamedTextColor.RED)
-                    .decoration(TextDecoration.BOLD, true)
-                    .decoration(TextDecoration.ITALIC, false)));
+            Component emptyParcelMessage = this.messageContainer.messageFor("menu.parcel.post-empty-parcel")
+                            .decoration(TextDecoration.ITALIC, false);
+            updated.lore(List.of(emptyParcelMessage));
             display.setItemMeta(updated);
             element.setItem(display);
             action.getGui().draw();
@@ -398,7 +416,7 @@ public class PostOfficeMenu {
         while (!history.isEmpty()) {
             InventoryGui.addHistory(action.getWhoClicked(), history.pollFirst());
         }
-        Prompt prompt = new PostPrompt(items, this.postalPackageFactory, this.plugin.getServer());
+        Prompt prompt = new PostPrompt(items, this.postalPackageFactory, this.messageContainer, this.plugin.getServer());
         Conversation conversation = this.conversationFactory.withFirstPrompt(prompt)
                 .withEscapeSequence("cancel")
                 .withTimeout(60)
@@ -435,7 +453,7 @@ public class PostOfficeMenu {
 
     private GuiElement elementBack(char c) {
         final ItemStack itemStack = this.itemFactory.createBackButton();
-        final Component displayName = Component.text("Back", NamedTextColor.RED)
+        final Component displayName = this.messageContainer.messageFor("menu.back")
                 .decoration(TextDecoration.ITALIC, false);
         return new GuiBackElement(c, itemStack, LegacyComponentSerializer.legacySection().serialize(displayName));
     }
@@ -443,7 +461,7 @@ public class PostOfficeMenu {
     @Nonnull
     private GuiElement elementExit(char c) {
         final ItemStack itemStack = this.itemFactory.createExitButton();
-        final Component displayName = Component.text("Exit", NamedTextColor.RED)
+        final Component displayName = this.messageContainer.messageFor("menu.exit")
                 .decoration(TextDecoration.ITALIC, false);
         return new StaticGuiElement(c,
                 itemStack,

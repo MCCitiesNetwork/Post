@@ -1,7 +1,9 @@
 package io.github.md5sha256.democracypost.localization;
 
+import io.papermc.paper.text.PaperComponents;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
 
@@ -14,9 +16,13 @@ public class MessageContainer {
 
     private final Map<String, Component> messages = new ConcurrentHashMap<>();
 
+    public String plaintextMessageFor(@Nonnull String key) {
+        return PlainTextComponentSerializer.plainText().serialize(messageFor(key));
+    }
+
     @Nonnull
     public Component messageFor(@Nonnull String key) {
-        return this.messages.getOrDefault(key, Component.empty());
+        return this.messages.getOrDefault(key, Component.text(key));
     }
 
     @Nonnull

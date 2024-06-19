@@ -10,14 +10,41 @@ messages:
     claimed: <yellow>Package successfully claimed.
     mailbox: <red>You received a mailbox.
     unclaimed: <red>The user didn't claimed a package so it has been returned to you.
+    insufficient-inventory-space: '<yellow>Warning: insufficient inventory space!'
+
+prompt:
+    post-parcel:
+        initial-message: 'Who should this package be mailed to? (or "cancel")'
+        unknown-player: 'Unknown player: %player%'
+        send-parcel-self: "You can't mail a parcel to yourself!"
+        send-parcel-success: "Parcel mailed!"
+
 menu:
+
+    next-page: <dark_aqua>Next Page
+    previous-page: <dark_aqua>Previous Page
+    back: <red>Back
+    exit: <red>Exit
+
     main:
         title: <blue><bold>POST <gray>>>></gray> Main Menu
+        post-parcel: <aqua>Post a package
+        open-mailbox: '<red>Open Postbox'
+        unopened-packages: '<white>Num Packages: %packages%'
+        no-unopened-packages: '<green>No unopened packages!'
 
     parcel:
         drop: <yellow>Parcel Drop
-        collection: <yellow>Parcel Collection
+        collection-title: <yellow>Parcel Collection
+        collect-parcel: <green>Collect Parcel
         list: <yellow>%player%'s Parcels
+        post-parcel: <red>Send a package
+        post-parcel-price: '<gray>Price: %price%'
+        post-empty-parcel: <red><bold>Cannot send empty parcels!</bold>
+        package-number: '<gold>Package number: %number%'
+        package-sender: '<white>From: %player%'
+        package-num-items: '<white>%items% items'
+        package-expiry-date: '<yellow>Expires: %date%'
 
     mailbox:
         title: <yellow>%player%'s Mailbox

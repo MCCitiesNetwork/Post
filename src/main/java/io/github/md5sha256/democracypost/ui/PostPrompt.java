@@ -1,5 +1,6 @@
 package io.github.md5sha256.democracypost.ui;
 
+import io.github.md5sha256.democracypost.localization.MessageContainer;
 import io.github.md5sha256.democracypost.model.PostalPackageFactory;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
@@ -21,20 +22,23 @@ public class PostPrompt extends StringPrompt {
     private final List<ItemStack> contents;
     private final PostalPackageFactory postalPackageFactory;
     private final Server server;
+    private final MessageContainer messageContainer;
 
     public PostPrompt(
             @Nonnull List<ItemStack> items,
             @Nonnull PostalPackageFactory postalPackageFactory,
+            @Nonnull MessageContainer messageContainer,
             @Nonnull Server server
     ) {
         this.contents = List.copyOf(items);
         this.postalPackageFactory = postalPackageFactory;
+        this.messageContainer = messageContainer;
         this.server = server;
     }
 
     @Override
     public @NotNull String getPromptText(@NotNull ConversationContext context) {
-        return "Who should this package be mailed to? (or \"cancel\")";
+        return this.messageContainer.plaintextMessageFor("prompt.post.initial-message");
     }
 
     @Override
@@ -48,16 +52,18 @@ public class PostPrompt extends StringPrompt {
         }
         OfflinePlayer offlinePlayer = this.server.getOfflinePlayerIfCached(input);
         if (offlinePlayer == null || !offlinePlayer.hasPlayedBefore()) {
-            sender.sendRawMessage("Unknown player: " + input);
+            String message = this.messageContainer.plaintextMessageFor("prompt.post.unknown-player")
+                            .replace("%player%", input);
+            sender.sendRawMessage(message);
             return this;
         }
         UUID recipient = offlinePlayer.getUniqueId();
         if (player.getUniqueId().equals(recipient)) {
-            sender.sendRawMessage("You can't mail a parcel to yourself!");
+            sender.sendRawMessage(this.messageContainer.plaintextMessageFor("prompt.post.send-parcel-self"));
             return this;
         }
         this.postalPackageFactory.createAndPostPackage(player.getUniqueId(), recipient, this.contents, false);
-        sender.sendRawMessage("Parcel mailed!");
+        sender.sendRawMessage(this.messageContainer.plaintextMessageFor("prompt.post.send-parcel-success"));
         return END_OF_CONVERSATION;
     }
 }
