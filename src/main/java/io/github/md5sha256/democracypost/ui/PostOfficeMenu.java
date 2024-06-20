@@ -105,6 +105,7 @@ public class PostOfficeMenu {
             return CompletableFuture.failedFuture(new IllegalArgumentException("User has not played before: " + user));
         }
         BukkitScheduler scheduler = this.plugin.getServer().getScheduler();
+        OfflinePlayer offlinePlayer = this.plugin.getServer().getOfflinePlayer(user);
         scheduler.runTaskAsynchronously(this.plugin, () -> {
             List<PostalPackage> packages;
             try {
@@ -182,6 +183,7 @@ public class PostOfficeMenu {
     }
 
     public CompletableFuture<InventoryGui> createParcelListUi(@Nonnull UUID user) {
+        OfflinePlayer offlinePlayer = this.plugin.getServer().getOfflinePlayer(user);
         CompletableFuture<InventoryGui> future = new CompletableFuture<>();
         BukkitScheduler scheduler = this.plugin.getServer().getScheduler();
         OfflinePlayer offlinePlayer = this.plugin.getServer().getOfflinePlayer(user);
