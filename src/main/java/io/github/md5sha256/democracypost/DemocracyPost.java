@@ -83,7 +83,7 @@ public final class DemocracyPost extends JavaPlugin {
         }
         // Plugin startup logic
         int saveDurationTicks = Tick.tick().fromDuration(this.settings.savePeriodDuration());
-        getServer().getScheduler().runTaskTimer(
+        getServer().getScheduler().runTaskTimerAsynchronously(
                 this,
                 () -> {
                     getLogger().info("Transferring expired packages...");
