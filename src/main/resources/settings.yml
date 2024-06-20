@@ -11,6 +11,7 @@ ui-settings:
 post-settings:
   package-expiry-seconds: 604800
   return-package-expiry-seconds: 2592000
+  post-price: 0.50
 
 save-duration-seconds: 600
 

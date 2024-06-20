@@ -25,6 +25,10 @@ repositories {
         }
     }
     maven {
+        name = "jitpack"
+        url = uri("https://jitpack.io")
+    }
+    maven {
         name = "minebench-repo"
         url = uri("https://repo.minebench.de/")
         content {
@@ -36,6 +40,7 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
+    compileOnly("com.github.MilkBowl:VaultAPI:1.7")
     // Provided by spigot library
     compileOnly("org.mariadb.jdbc:mariadb-java-client:3.4.0")
     compileOnly("com.zaxxer:HikariCP:5.1.0")

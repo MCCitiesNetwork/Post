@@ -10,6 +10,8 @@ import io.github.md5sha256.democracypost.serializer.Serializers;
 import io.github.md5sha256.democracypost.ui.PostOfficeMenu;
 import io.github.md5sha256.democracypost.ui.UiItemFactory;
 import io.papermc.paper.util.Tick;
+import net.milkbowl.vault.economy.Economy;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.yaml.NodeStyle;
@@ -22,6 +24,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.sql.SQLException;
+import java.util.Optional;
 
 public final class DemocracyPost extends JavaPlugin {
 
@@ -53,13 +56,26 @@ public final class DemocracyPost extends JavaPlugin {
         if (!isEnabled()) {
             return;
         }
+        if (getServer().getPluginManager().getPlugin("Vault") == null) {
+            getLogger().severe("Missing Vault!");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        Optional<Economy> economy = getEconomy();
+        if (economy.isEmpty()) {
+            getLogger().severe("Missing economy provider!");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
         this.itemFactory = new UiItemFactory(this.settings.uiSettings());
         this.postOfficeMenu = new PostOfficeMenu(
                 this,
                 this.databaseAdapter,
                 this.postalPackageFactory,
                 this.messageContainer,
-                this.itemFactory
+                this.itemFactory,
+                this.settings.postSettings(),
+                economy.get()
         );
         if (getServer().getPluginManager().isPluginEnabled("HeadDatabase")) {
             // Listen for the database load event to re-cache the heads in the item factory
@@ -153,5 +169,10 @@ public final class DemocracyPost extends JavaPlugin {
         if (!dataFolder.isDirectory()) {
             Files.createDirectory(dataFolder.toPath());
         }
+    }
+
+    private Optional<Economy> getEconomy() {
+        RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
+        return Optional.ofNullable(rsp).map(RegisteredServiceProvider::getProvider);
     }
 }

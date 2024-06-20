@@ -10,7 +10,8 @@ import java.time.Duration;
 @ConfigSerializable
 public record PostSettings(
         @Setting @Required long packageExpirySeconds,
-        @Setting @Required long returnPackageExpirySeconds
+        @Setting @Required long returnPackageExpirySeconds,
+        @Setting @Required double postPrice
 ) {
 
     @Nonnull

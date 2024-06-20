@@ -8,6 +8,7 @@ import de.themoep.inventorygui.GuiPageElement;
 import de.themoep.inventorygui.GuiStorageElement;
 import de.themoep.inventorygui.InventoryGui;
 import de.themoep.inventorygui.StaticGuiElement;
+import io.github.md5sha256.democracypost.PostSettings;
 import io.github.md5sha256.democracypost.database.DatabaseAdapter;
 import io.github.md5sha256.democracypost.localization.MessageContainer;
 import io.github.md5sha256.democracypost.model.PackageContent;
@@ -19,6 +20,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
@@ -27,6 +29,7 @@ import org.bukkit.conversations.Conversation;
 import org.bukkit.conversations.ConversationFactory;
 import org.bukkit.conversations.Prompt;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -36,6 +39,8 @@ import org.bukkit.scheduler.BukkitScheduler;
 import javax.annotation.Nonnull;
 import java.sql.SQLException;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -48,6 +53,7 @@ import java.util.concurrent.CompletableFuture;
 public class PostOfficeMenu {
 
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd MM yyyy");
+    private static final NumberFormat PRICE_FORMAT = new DecimalFormat("###.##");
 
     private final JavaPlugin plugin;
     private final ConversationFactory conversationFactory;
@@ -56,13 +62,17 @@ public class PostOfficeMenu {
     private final MessageContainer messageContainer;
     private final InventoryGui.InventoryCreator inventoryCreator;
     private final UiItemFactory itemFactory;
+    private final PostSettings postSettings;
+    private final Economy economy;
 
     public PostOfficeMenu(
             @Nonnull JavaPlugin plugin,
             @Nonnull DatabaseAdapter databaseAdapter,
             @Nonnull PostalPackageFactory postalPackageFactory,
             @Nonnull MessageContainer messageContainer,
-            @Nonnull UiItemFactory itemFactory
+            @Nonnull UiItemFactory itemFactory,
+            @Nonnull PostSettings postSettings, 
+            @Nonnull Economy economy
     ) {
         this.plugin = plugin;
         this.conversationFactory = new ConversationFactory(plugin);
@@ -71,6 +81,8 @@ public class PostOfficeMenu {
         this.messageContainer = messageContainer;
         this.inventoryCreator = PaperInventoryCreator.creator(plugin.getServer());
         this.itemFactory = itemFactory;
+        this.postSettings = postSettings;
+        this.economy = economy;
     }
 
     private static boolean handleInventoryClose(InventoryGui.Close close, Inventory storageInv) {
@@ -243,21 +255,36 @@ public class PostOfficeMenu {
         return new DisplayGuiElement(c, item);
     }
 
-    private GuiElement elementSendPackage(char c) {
+    private ItemStack createSendPackageIcon() {
         ItemStack itemStack = this.itemFactory.createSendPackageButton();
         ItemMeta meta = itemStack.getItemMeta();
         Component displayName = this.messageContainer.messageFor("menu.parcel.post-parcel")
                 .decoration(TextDecoration.ITALIC, false);
         meta.displayName(displayName);
-        // FIXME price
-        String formattedPrice = "0.50";
+        double price = this.postSettings.postPrice();
+        String formattedPrice = PRICE_FORMAT.format(price);
         Component priceIndicator = this.messageContainer.messageFor("menu.parcel.post-parcel-price")
                 .replaceText(builder -> builder.matchLiteral("%price%").replacement(formattedPrice))
                 .decoration(TextDecoration.ITALIC, false);
         meta.lore(List.of(priceIndicator));
         itemStack.setItemMeta(meta);
-        GuiElement element = new DisplayGuiElement(c, itemStack);
+        return itemStack;
+    }
+
+    private GuiElement elementSendPackage(char c) {
+        ItemStack itemStack = createSendPackageIcon();
+        double price = this.postSettings.postPrice();
+        DisplayGuiElement element = new DisplayGuiElement(c, itemStack);
         element.setAction(action -> {
+            HumanEntity who = action.getWhoClicked();
+            if (!(who instanceof Player player)) {
+                return true;
+            }
+            if (this.economy.getBalance(player) < price) {
+                player.sendMessage(this.messageContainer.messageFor("menu.parcel.post-insufficient-balance"));
+                action.getGui().close(player);
+                return true;
+            }
             createParcelPostUi().show(action.getWhoClicked());
             return true;
         });
@@ -416,7 +443,14 @@ public class PostOfficeMenu {
         while (!history.isEmpty()) {
             InventoryGui.addHistory(action.getWhoClicked(), history.pollFirst());
         }
-        Prompt prompt = new PostPrompt(items, this.postalPackageFactory, this.messageContainer, this.plugin.getServer());
+        Prompt prompt = new PostPrompt(
+                items,
+                this.postalPackageFactory,
+                this.messageContainer,
+                this.plugin.getServer(),
+                this.economy,
+                this.postSettings
+        );
         Conversation conversation = this.conversationFactory.withFirstPrompt(prompt)
                 .withEscapeSequence("cancel")
                 .withTimeout(60)

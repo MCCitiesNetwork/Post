@@ -12,8 +12,10 @@ messages:
     unclaimed: <red>The user didn't claimed a package so it has been returned to you.
     insufficient-inventory-space: '<yellow>Warning: insufficient inventory space!'
 
+
 prompt:
     post-parcel:
+        insufficient-balance: 'Insufficient balance to send a parcel'
         initial-message: 'Who should this package be mailed to? (or "cancel")'
         unknown-player: 'Unknown player: %player%'
         send-parcel-self: "You can't mail a parcel to yourself!"
@@ -34,6 +36,7 @@ menu:
         no-unopened-packages: '<green>No unopened packages!'
 
     parcel:
+        post-insufficient-balance: <red>Insufficient balance to send a parcel
         drop: <yellow>Parcel Drop
         collection-title: <yellow>Parcel Collection
         collect-parcel: <green>Collect Parcel
