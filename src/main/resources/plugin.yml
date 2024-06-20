@@ -9,7 +9,7 @@ softdepend: ['HeadDatabase']
 commands:
   post open:
     description: "Display a user's post box for them"
-    permission: "democracypost.post.open"
+    permission: "democracypost.open"
   post view:
     description: "View a user's post box"
     permission: "democracypost.view"
