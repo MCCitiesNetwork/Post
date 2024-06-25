@@ -57,6 +57,9 @@ dependencies {
     implementation("org.incendo:cloud-annotations:2.0.0-beta.2") {
         exclude("com.google.guava")
     }
+    testImplementation(platform("org.junit:junit-bom:5.10.2"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
 }
 
 val targetJavaVersion = 17
@@ -70,11 +73,16 @@ tasks {
         options.release.set(targetJavaVersion)
     }
 
+    test {
+        useJUnitPlatform()
+    }
+
     processResources {
         filesMatching("plugin.yml") {
             expand("version" to project.version)
         }
     }
+
     shadowJar {
         val path = "io.github.md5sha256.democracypost.libraries"
         relocate("org.incendo.cloud", "${path}.cloud")
@@ -84,6 +92,7 @@ tasks {
         relocate("com.google.gson", "${path}.gson")
         relocate("de.themoep.inventorygui", "${path}.inventorygui")
     }
+
     runServer {
         minecraftVersion("1.20.4")
     }
