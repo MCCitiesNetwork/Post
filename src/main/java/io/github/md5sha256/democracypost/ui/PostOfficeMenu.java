@@ -212,7 +212,7 @@ public class PostOfficeMenu {
                 "  p b n  ",
         };
         Component title = this.messageContainer.messageFor("menu.parcel.list")
-                .replaceText(builder -> builder.matchLiteral("%plater%").replacement(playerName));
+                .replaceText(builder -> builder.matchLiteral("%player%").replacement(playerName));
         return createGui(
                 title,
                 rows,
