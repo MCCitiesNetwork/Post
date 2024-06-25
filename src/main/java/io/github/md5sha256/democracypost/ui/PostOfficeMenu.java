@@ -100,6 +100,10 @@ public class PostOfficeMenu {
 
     public CompletableFuture<InventoryGui> createPostUi(@Nonnull UUID user) {
         CompletableFuture<InventoryGui> future = new CompletableFuture<>();
+        OfflinePlayer player = this.plugin.getServer().getOfflinePlayer(user);
+        if (!player.hasPlayedBefore()) {
+            return CompletableFuture.failedFuture(new IllegalArgumentException("User has not played before: " + user));
+        }
         BukkitScheduler scheduler = this.plugin.getServer().getScheduler();
         scheduler.runTaskAsynchronously(this.plugin, () -> {
             List<PostalPackage> packages;
@@ -109,12 +113,12 @@ public class PostOfficeMenu {
                 future.completeExceptionally(ex);
                 return;
             }
-            scheduler.runTask(this.plugin, () -> future.complete(createPostUi(packages)));
+            scheduler.runTask(this.plugin, () -> future.complete(createPostUi(player.getName(), packages)));
         });
         return future;
     }
 
-    public InventoryGui createPostUi(List<PostalPackage> packages) {
+    public InventoryGui createPostUi(String playerName, List<PostalPackage> packages) {
         String[] rows = new String[]{
                 "         ",
                 " ####### ",
@@ -129,7 +133,7 @@ public class PostOfficeMenu {
                 new DisplayGuiElement('#', null),
                 elementSendPackage('p'),
                 elementExit('e'),
-                elementPackagesIcon('v', packages));
+                elementPackagesIcon('v', playerName, packages));
     }
 
     public InventoryGui createParcelPostUi() {
@@ -180,6 +184,10 @@ public class PostOfficeMenu {
     public CompletableFuture<InventoryGui> createParcelListUi(@Nonnull UUID user) {
         CompletableFuture<InventoryGui> future = new CompletableFuture<>();
         BukkitScheduler scheduler = this.plugin.getServer().getScheduler();
+        OfflinePlayer offlinePlayer = this.plugin.getServer().getOfflinePlayer(user);
+        if (!offlinePlayer.hasPlayedBefore()) {
+            return CompletableFuture.failedFuture(new IllegalArgumentException("User has never played before: " + user));
+        }
         scheduler.runTaskAsynchronously(this.plugin, () -> {
             List<PostalPackage> packages;
             try {
@@ -188,14 +196,14 @@ public class PostOfficeMenu {
                 future.completeExceptionally(ex);
                 return;
             }
-            scheduler.runTask(this.plugin, () -> future.complete(createParcelListUi(packages)));
+            scheduler.runTask(this.plugin, () -> future.complete(createParcelListUi(offlinePlayer.getName(), packages)));
         });
         return future;
     }
 
 
     @Nonnull
-    public InventoryGui createParcelListUi(List<PostalPackage> packages) {
+    public InventoryGui createParcelListUi(String playerName, List<PostalPackage> packages) {
         String[] rows = new String[]{
                 "         ",
                 " ddddddd ",
@@ -203,8 +211,10 @@ public class PostOfficeMenu {
                 " ddddddd ",
                 "  p b n  ",
         };
+        Component title = this.messageContainer.messageFor("menu.parcel.list")
+                .replaceText(builder -> builder.matchLiteral("%plater%").replacement(playerName));
         return createGui(
-                this.messageContainer.messageFor("menu.parcel.list"),
+                title,
                 rows,
                 elementPanes(' '),
                 elementBack('b'),
@@ -291,7 +301,7 @@ public class PostOfficeMenu {
         return element;
     }
 
-    private GuiElement elementPackagesIcon(char c, List<PostalPackage> packages) {
+    private GuiElement elementPackagesIcon(char c, String playerName, List<PostalPackage> packages) {
         ItemStack itemStack = this.itemFactory.createPackagesIcon();
         ItemMeta meta = itemStack.getItemMeta();
         Component displayName = this.messageContainer.messageFor("menu.main.open-mailbox")
@@ -311,7 +321,7 @@ public class PostOfficeMenu {
         itemStack.setItemMeta(meta);
         GuiElement element = new DisplayGuiElement(c, itemStack);
         element.setAction(action -> {
-            createParcelListUi(packages).show(action.getWhoClicked());
+            createParcelListUi(playerName, packages).show(action.getWhoClicked());
             return true;
         });
         return element;
