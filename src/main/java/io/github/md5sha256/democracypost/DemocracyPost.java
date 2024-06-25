@@ -41,9 +41,9 @@ public final class DemocracyPost extends JavaPlugin {
             initDataFolder();
             this.messageContainer = loadMessages();
             this.settings = loadSettings();
-            this.postalPackageFactory = initPostalPackageFactory();
             this.databaseAdapter = initDatabase();
             this.databaseAdapter.init();
+            this.postalPackageFactory = initPostalPackageFactory();
         } catch (IOException | SQLException ex) {
             ex.printStackTrace();
             getLogger().severe("Failed to initialize!");
