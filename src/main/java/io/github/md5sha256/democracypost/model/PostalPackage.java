@@ -52,6 +52,6 @@ public class PostalPackage {
     }
 
     public boolean expired() {
-        return this.expiryDate.after(Date.from(Instant.now()));
+        return Date.from(Instant.now()).after(this.expiryDate);
     }
 }
