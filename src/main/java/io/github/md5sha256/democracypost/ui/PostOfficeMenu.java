@@ -52,7 +52,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class PostOfficeMenu {
 
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd MM yyyy");
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MMM d h:mm aaa yyyy");
     private static final NumberFormat PRICE_FORMAT = new DecimalFormat("###.##");
 
     private final JavaPlugin plugin;
@@ -105,7 +105,6 @@ public class PostOfficeMenu {
             return CompletableFuture.failedFuture(new IllegalArgumentException("User has not played before: " + user));
         }
         BukkitScheduler scheduler = this.plugin.getServer().getScheduler();
-        OfflinePlayer offlinePlayer = this.plugin.getServer().getOfflinePlayer(user);
         scheduler.runTaskAsynchronously(this.plugin, () -> {
             List<PostalPackage> packages;
             try {
@@ -114,7 +113,9 @@ public class PostOfficeMenu {
                 future.completeExceptionally(ex);
                 return;
             }
-            scheduler.runTask(this.plugin, () -> future.complete(createPostUi(player.getName(), packages)));
+            List<PostalPackage> validPackages = new ArrayList<>(packages);
+            validPackages.removeIf(PostalPackage::expired);
+            scheduler.runTask(this.plugin, () -> future.complete(createPostUi(player.getName(), validPackages)));
         });
         return future;
     }
@@ -184,11 +185,11 @@ public class PostOfficeMenu {
 
     public CompletableFuture<InventoryGui> createParcelListUi(@Nonnull UUID user) {
         OfflinePlayer offlinePlayer = this.plugin.getServer().getOfflinePlayer(user);
-        CompletableFuture<InventoryGui> future = new CompletableFuture<>();
-        BukkitScheduler scheduler = this.plugin.getServer().getScheduler();
         if (!offlinePlayer.hasPlayedBefore()) {
             return CompletableFuture.failedFuture(new IllegalArgumentException("User has never played before: " + user));
         }
+        CompletableFuture<InventoryGui> future = new CompletableFuture<>();
+        BukkitScheduler scheduler = this.plugin.getServer().getScheduler();
         scheduler.runTaskAsynchronously(this.plugin, () -> {
             List<PostalPackage> packages;
             try {
@@ -197,7 +198,9 @@ public class PostOfficeMenu {
                 future.completeExceptionally(ex);
                 return;
             }
-            scheduler.runTask(this.plugin, () -> future.complete(createParcelListUi(offlinePlayer.getName(), packages)));
+            List<PostalPackage> validPackages = new ArrayList<>(packages);
+            validPackages.removeIf(PostalPackage::expired);
+            scheduler.runTask(this.plugin, () -> future.complete(createParcelListUi(offlinePlayer.getName(), validPackages)));
         });
         return future;
     }
@@ -247,6 +250,7 @@ public class PostOfficeMenu {
                         this.databaseAdapter,
                         this.plugin
                 );
+                action.getGui().close();
                 return true;
             });
             return button;

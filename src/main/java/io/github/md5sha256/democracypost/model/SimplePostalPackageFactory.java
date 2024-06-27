@@ -19,8 +19,8 @@ public class SimplePostalPackageFactory implements PostalPackageFactory {
 
     private final Plugin plugin;
     private final DatabaseAdapter adapter;
-    private Duration expiryDuration;
-    private Duration returnPackageExpiryDuration;
+    private final Duration expiryDuration;
+    private final Duration returnPackageExpiryDuration;
 
     public SimplePostalPackageFactory(
             @Nonnull Plugin plugin,
@@ -54,7 +54,9 @@ public class SimplePostalPackageFactory implements PostalPackageFactory {
         Logger logger = this.plugin.getLogger();
         this.plugin.getServer().getScheduler().runTaskAsynchronously(this.plugin, () -> {
             try {
-                this.adapter.addPackage(createPackage(sender, recipient, contents, isReturnPackage));
+                PostalPackage postalPackage = createPackage(sender, recipient, contents, isReturnPackage);
+                logger.info("Posting package: " + postalPackage.id() + " sender: " + sender + " receiver: " + recipient);
+                this.adapter.addPackage(postalPackage);
             } catch (SQLException ex) {
                 logger.warning("Failed to post package!");
                 ex.printStackTrace();

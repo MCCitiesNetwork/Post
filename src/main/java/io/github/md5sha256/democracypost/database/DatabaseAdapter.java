@@ -9,6 +9,7 @@ import javax.annotation.Nonnull;
 import java.io.Closeable;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
@@ -48,9 +49,9 @@ public class DatabaseAdapter implements Closeable {
         this.dataSource.close();
     }
 
-    public void transferExpiredPackages() throws SQLException {
+    public void transferExpiredPackages(@Nonnull Duration returnPackageExpiryDuration) throws SQLException {
         try (Connection connection = this.dataSource.getConnection()) {
-            this.schema.cleanupExpiredPackages(connection);
+            this.schema.cleanupExpiredPackages(connection, returnPackageExpiryDuration);
         }
     }
 

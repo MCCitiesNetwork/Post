@@ -21,6 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,7 +60,7 @@ public class MariaSchema implements DatabaseSchema {
             SET
               package_receiver = package_sender,
               package_expiry_date = ?
-            WHERE package_expiry_date >= ?;
+            WHERE package_is_return = FALSE AND package_expiry_date >= ?;
             """;
 
     private static final String DELETE_EXPIRED_RETURN_PACKAGES = """
@@ -70,7 +71,7 @@ public class MariaSchema implements DatabaseSchema {
     private static final String SELECT_PACKAGES_FOR_RECEIVER = """
             SELECT package_id, package_expiry_date, package_is_return, package_sender, package_content
             FROM POST_PACKAGE
-            WHERE package_sender = ?;
+            WHERE package_receiver = ?;
             """;
 
     private static final String INSERT_PACKAGE = """
@@ -109,12 +110,14 @@ public class MariaSchema implements DatabaseSchema {
     }
 
     @Override
-    public void cleanupExpiredPackages(@Nonnull Connection connection) throws SQLException {
+    public void cleanupExpiredPackages(@Nonnull Connection connection, @Nonnull Duration returnPackageExpiryDuration)
+            throws SQLException {
         Timestamp now = Timestamp.from(Instant.now());
+        Timestamp returnPackageExpiry = Timestamp.from(Instant.now().plus(returnPackageExpiryDuration));
         try (PreparedStatement updateStatement = connection.prepareStatement(UPDATE_EXPIRED_PACKAGES);
         PreparedStatement deletionStatement = connection.prepareStatement(DELETE_EXPIRED_RETURN_PACKAGES)){
             updateStatement.setTimestamp(1, now);
-            updateStatement.setTimestamp(2, now);
+            updateStatement.setTimestamp(2, returnPackageExpiry);
             updateStatement.executeUpdate();
             deletionStatement.setTimestamp(1, now);
             deletionStatement.executeUpdate();

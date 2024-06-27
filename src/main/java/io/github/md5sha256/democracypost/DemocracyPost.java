@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.Optional;
 
 public final class DemocracyPost extends JavaPlugin {
@@ -42,9 +43,8 @@ public final class DemocracyPost extends JavaPlugin {
             this.messageContainer = loadMessages();
             this.settings = loadSettings();
             this.databaseAdapter = initDatabase();
-            this.databaseAdapter.init();
             this.postalPackageFactory = initPostalPackageFactory();
-        } catch (IOException | SQLException ex) {
+        } catch (IOException ex) {
             ex.printStackTrace();
             getLogger().severe("Failed to initialize!");
             getServer().getPluginManager().disablePlugin(this);
@@ -83,12 +83,13 @@ public final class DemocracyPost extends JavaPlugin {
         }
         // Plugin startup logic
         int saveDurationTicks = Tick.tick().fromDuration(this.settings.savePeriodDuration());
+        Duration returnPackageExpiryDuration = this.settings.postSettings().returnPackageExpiryDuration();
         getServer().getScheduler().runTaskTimerAsynchronously(
                 this,
                 () -> {
                     getLogger().info("Transferring expired packages...");
                     try {
-                        this.databaseAdapter.transferExpiredPackages();
+                        this.databaseAdapter.transferExpiredPackages(returnPackageExpiryDuration);
                     } catch (SQLException ex) {
                         ex.printStackTrace();
                     }
@@ -161,7 +162,13 @@ public final class DemocracyPost extends JavaPlugin {
 
     @Nonnull
     private DatabaseAdapter initDatabase() throws IOException {
-        return new DatabaseAdapter(this.settings.databaseSettings());
+        DatabaseAdapter adapter = new DatabaseAdapter(this.settings.databaseSettings());
+        try {
+            adapter.init();
+        } catch (SQLException ex) {
+            throw new IOException(ex);
+        }
+        return adapter;
     }
 
     private void initDataFolder() throws IOException {
