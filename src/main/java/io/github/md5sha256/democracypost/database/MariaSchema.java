@@ -116,8 +116,8 @@ public class MariaSchema implements DatabaseSchema {
         Timestamp returnPackageExpiry = Timestamp.from(Instant.now().plus(returnPackageExpiryDuration));
         try (PreparedStatement updateStatement = connection.prepareStatement(UPDATE_EXPIRED_PACKAGES);
         PreparedStatement deletionStatement = connection.prepareStatement(DELETE_EXPIRED_RETURN_PACKAGES)){
-            updateStatement.setTimestamp(1, now);
-            updateStatement.setTimestamp(2, returnPackageExpiry);
+            updateStatement.setTimestamp(1, returnPackageExpiry);
+            updateStatement.setTimestamp(2, now);
             updateStatement.executeUpdate();
             deletionStatement.setTimestamp(1, now);
             deletionStatement.executeUpdate();

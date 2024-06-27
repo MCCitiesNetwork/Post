@@ -11,6 +11,7 @@ public class PostalPackage {
     private final Date expiryDate;
     private final PackageContent content;
     private final boolean isReturnPackage;
+    private volatile boolean unclaimed = true;
 
 
     public PostalPackage(@Nonnull Date expiryDate, @Nonnull PackageContent content, boolean isReturnPackage) {
@@ -53,5 +54,13 @@ public class PostalPackage {
 
     public boolean expired() {
         return Date.from(Instant.now()).after(this.expiryDate);
+    }
+
+    public boolean unclaimed() {
+        return this.unclaimed;
+    }
+
+    public void setClaimed(boolean claimed) {
+        this.unclaimed = !claimed;
     }
 }

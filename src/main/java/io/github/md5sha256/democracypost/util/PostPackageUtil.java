@@ -20,7 +20,7 @@ public class PostPackageUtil {
         throw new IllegalStateException("Cannot instantiate static utility class");
     }
 
-    public static CompletableFuture<Boolean> openPackage(
+    public static CompletableFuture<Boolean> claimPackage(
             HumanEntity who,
             PostalPackage postalPackage,
             DatabaseAdapter adapter,
@@ -30,6 +30,11 @@ public class PostPackageUtil {
             who.sendMessage(Component.text("Cannot open expired package!", NamedTextColor.RED));
             return CompletableFuture.completedFuture(false);
         }
+        if (!postalPackage.unclaimed()) {
+            who.sendMessage(Component.text("Package already claimed!", NamedTextColor.RED));
+            return CompletableFuture.completedFuture(false);
+        }
+        postalPackage.setClaimed(true);
         BukkitScheduler scheduler = plugin.getServer().getScheduler();
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         scheduler.runTaskAsynchronously(plugin, () -> {
@@ -39,6 +44,7 @@ public class PostPackageUtil {
                 plugin.getLogger().warning("Failed to delete package!");
                 who.sendMessage(DELETION_ERROR_MESSAGE);
                 ex.printStackTrace();
+                postalPackage.setClaimed(false);
                 future.complete(false);
                 return;
             }

@@ -244,7 +244,7 @@ public class PostOfficeMenu {
             collectButton.setItemMeta(meta);
             GuiElement button = new DisplayGuiElement(c, collectButton);
             button.setAction(action -> {
-                PostPackageUtil.openPackage(
+                PostPackageUtil.claimPackage(
                         action.getWhoClicked(),
                         postalPackage,
                         this.databaseAdapter,
@@ -337,7 +337,9 @@ public class PostOfficeMenu {
             GuiElementGroup group = new GuiElementGroup('a');
             int i = 1;
             for (PostalPackage postalPackage : packages) {
-                group.addElement(elementPackageIcon('a', i, postalPackage));
+                if (postalPackage.unclaimed()) {
+                    group.addElement(elementPackageIcon('a', i, postalPackage));
+                }
                 i += 1;
             }
             return group;
@@ -377,8 +379,7 @@ public class PostOfficeMenu {
         element.setAction(action -> {
             HumanEntity who = action.getWhoClicked();
             if (action.getType().isShiftClick()) {
-                PostPackageUtil.openPackage(who, postalPackage, this.databaseAdapter, this.plugin);
-                action.getGui().removeElement(element);
+                PostPackageUtil.claimPackage(who, postalPackage, this.databaseAdapter, this.plugin);
                 action.getGui().draw();
             } else {
                 createParcelCollectionUi(postalPackage).show(action.getWhoClicked());
