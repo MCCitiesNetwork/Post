@@ -186,7 +186,6 @@ public class PostOfficeMenu {
         OfflinePlayer offlinePlayer = this.plugin.getServer().getOfflinePlayer(user);
         CompletableFuture<InventoryGui> future = new CompletableFuture<>();
         BukkitScheduler scheduler = this.plugin.getServer().getScheduler();
-        OfflinePlayer offlinePlayer = this.plugin.getServer().getOfflinePlayer(user);
         if (!offlinePlayer.hasPlayedBefore()) {
             return CompletableFuture.failedFuture(new IllegalArgumentException("User has never played before: " + user));
         }
