@@ -53,7 +53,7 @@ import java.util.concurrent.CompletableFuture;
 public class PostOfficeMenu {
 
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MMM d h:mm aaa yyyy");
-    private static final NumberFormat PRICE_FORMAT = new DecimalFormat("###.##");
+    private static final NumberFormat PRICE_FORMAT = NumberFormat.getCurrencyInstance();
 
     private final JavaPlugin plugin;
     private final ConversationFactory conversationFactory;
