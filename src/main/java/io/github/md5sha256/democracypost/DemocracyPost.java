@@ -87,13 +87,13 @@ public final class DemocracyPost extends JavaPlugin {
         getServer().getScheduler().runTaskTimerAsynchronously(
                 this,
                 () -> {
-                    getLogger().info("Transferring expired packages...");
+                    getLogger().fine("Transferring expired packages...");
                     try {
                         this.databaseAdapter.transferExpiredPackages(returnPackageExpiryDuration);
                     } catch (SQLException ex) {
                         ex.printStackTrace();
                     }
-                    getLogger().info("Changes saved!");
+                    getLogger().fine("Changes saved!");
                 },
                 0,
                 saveDurationTicks
