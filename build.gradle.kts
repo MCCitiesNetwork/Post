@@ -35,12 +35,21 @@ repositories {
             includeModule("de.themoep", "inventorygui")
         }
     }
+    maven {
+        name = "essentialsx"
+        url = uri("https://repo.essentialsx.net/releases/")
+        mavenContent {
+            releasesOnly()
+        }
+
+    }
 }
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7")
+    compileOnly("net.essentialsx:EssentialsX:2.20.1")
     // Provided by spigot library
     compileOnly("org.mariadb.jdbc:mariadb-java-client:3.4.0")
     compileOnly("com.zaxxer:HikariCP:5.1.0")

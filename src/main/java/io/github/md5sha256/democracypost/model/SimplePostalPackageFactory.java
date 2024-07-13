@@ -1,9 +1,13 @@
 package io.github.md5sha256.democracypost.model;
 
+import io.github.md5sha256.democracypost.EssentialsMailService;
 import io.github.md5sha256.democracypost.database.DatabaseAdapter;
 import io.github.md5sha256.democracypost.database.UserDataStore;
+import io.github.md5sha256.democracypost.localization.MessageContainer;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitScheduler;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
@@ -21,9 +25,11 @@ public class SimplePostalPackageFactory implements PostalPackageFactory {
     private final DatabaseAdapter adapter;
     private final Duration expiryDuration;
     private final Duration returnPackageExpiryDuration;
+    private final EssentialsMailService mailService;
 
     public SimplePostalPackageFactory(
             @Nonnull Plugin plugin,
+            @Nonnull EssentialsMailService mailService,
             @Nonnull DatabaseAdapter adapter,
             @Nonnull Duration expiryDuration,
             @Nonnull Duration returnPackageExpiryDuration
@@ -32,6 +38,7 @@ public class SimplePostalPackageFactory implements PostalPackageFactory {
         this.adapter = adapter;
         this.expiryDuration = expiryDuration;
         this.returnPackageExpiryDuration = returnPackageExpiryDuration;
+        this.mailService = mailService;
     }
 
     @NotNull
@@ -52,11 +59,16 @@ public class SimplePostalPackageFactory implements PostalPackageFactory {
                                      @NotNull List<ItemStack> contents,
                                      boolean isReturnPackage) {
         Logger logger = this.plugin.getLogger();
-        this.plugin.getServer().getScheduler().runTaskAsynchronously(this.plugin, () -> {
+        BukkitScheduler scheduler = this.plugin.getServer().getScheduler();
+        scheduler.runTaskAsynchronously(this.plugin, () -> {
             try {
                 PostalPackage postalPackage = createPackage(sender, recipient, contents, isReturnPackage);
-                logger.info("Posting package: " + postalPackage.id() + " sender: " + sender + " receiver: " + recipient);
+                logger.fine("Posting package: " + postalPackage.id() + " sender: " + sender + " receiver: " + recipient);
                 this.adapter.addPackage(postalPackage);
+                scheduler.runTask(this.plugin, () -> {
+                    OfflinePlayer senderPlayer = this.plugin.getServer().getOfflinePlayer(recipient);
+                    this.mailService.notifyNewParcel(recipient, senderPlayer.getName());
+                });
             } catch (SQLException ex) {
                 logger.warning("Failed to post package!");
                 ex.printStackTrace();

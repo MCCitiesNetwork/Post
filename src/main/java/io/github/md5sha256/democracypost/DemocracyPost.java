@@ -33,6 +33,7 @@ public final class DemocracyPost extends JavaPlugin {
     private PostalPackageFactory postalPackageFactory;
     private PostOfficeMenu postOfficeMenu;
     private MessageContainer messageContainer;
+    private EssentialsMailService mailService;
     private Settings settings;
     private UiItemFactory itemFactory;
 
@@ -43,7 +44,6 @@ public final class DemocracyPost extends JavaPlugin {
             this.messageContainer = loadMessages();
             this.settings = loadSettings();
             this.databaseAdapter = initDatabase();
-            this.postalPackageFactory = initPostalPackageFactory();
         } catch (IOException ex) {
             ex.printStackTrace();
             getLogger().severe("Failed to initialize!");
@@ -67,6 +67,8 @@ public final class DemocracyPost extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        this.postalPackageFactory = initPostalPackageFactory();
+        this.mailService = new EssentialsMailService(this.messageContainer);
         this.itemFactory = new UiItemFactory(this.settings.uiSettings());
         this.postOfficeMenu = new PostOfficeMenu(
                 this,
@@ -105,6 +107,7 @@ public final class DemocracyPost extends JavaPlugin {
         PostSettings postSettings = this.settings.postSettings();
         return new SimplePostalPackageFactory(
                 this,
+                this.mailService,
                 this.databaseAdapter,
                 postSettings.packageExpiryDuration(),
                 postSettings.returnPackageExpiryDuration()
