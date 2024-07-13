@@ -11,9 +11,11 @@ ui-settings:
 post-settings:
   package-expiry-seconds: 604800
   return-package-expiry-seconds: 2592000
+  expiry-notification-expiry-threshold-seconds: 259200
   post-price: 0.50
 
 save-duration-seconds: 600
+join-message-delay-seconds: 10
 
 database-settings:
   url: ''

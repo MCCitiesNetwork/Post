@@ -28,4 +28,8 @@ public interface DatabaseSchema {
 
     @Nonnull
     List<PostalPackage> getPackagesForReceiver(@Nonnull Connection connection, @Nonnull UUID receiver) throws SQLException;
+
+    @Nonnull
+    PackageExpiryData getPackageExpiryData(@Nonnull Connection connection, @Nonnull UUID receiver, @Nonnull Duration fromExpiry)
+            throws SQLException;
 }

@@ -14,6 +14,7 @@ import io.github.md5sha256.democracypost.localization.MessageContainer;
 import io.github.md5sha256.democracypost.model.PackageContent;
 import io.github.md5sha256.democracypost.model.PostalPackage;
 import io.github.md5sha256.democracypost.model.PostalPackageFactory;
+import io.github.md5sha256.democracypost.util.DateUtil;
 import io.github.md5sha256.democracypost.util.InventoryUtil;
 import io.github.md5sha256.democracypost.util.PostPackageUtil;
 import net.kyori.adventure.text.Component;
@@ -51,8 +52,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public class PostOfficeMenu {
-
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("MMM d h:mm aaa yyyy");
     private static final NumberFormat PRICE_FORMAT = NumberFormat.getCurrencyInstance();
 
     private final JavaPlugin plugin;
@@ -347,7 +346,7 @@ public class PostOfficeMenu {
     }
 
     private ItemStack createPackageIcon(int index, PostalPackage postalPackage) {
-        String date = DATE_FORMAT.format(postalPackage.expiryDate());
+        String date = DateUtil.formatDate(postalPackage.expiryDate());
         PackageContent content = postalPackage.content();
         Server server = this.plugin.getServer();
         OfflinePlayer sender = server.getOfflinePlayer(content.sender());

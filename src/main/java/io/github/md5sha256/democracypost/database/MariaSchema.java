@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -84,6 +85,14 @@ public class MariaSchema implements DatabaseSchema {
     private static final String DELETE_PACKAGE = """
             DELETE FROM POST_PACKAGE
             WHERE package_id = ?;
+            """;
+
+    private static final String SELECT_NEAR_EXPIRY_PACKAGES = """
+            SELECT COUNT(package_id), MIN(package_expiry_date)
+            FROM
+                POST_PACKAGE
+            WHERE
+                package_receiver = ? AND package_expiry_date <= ?;
             """;
 
     @NotNull
@@ -161,6 +170,27 @@ public class MariaSchema implements DatabaseSchema {
             }
         }
         return packages;
+    }
+
+    @NotNull
+    @Override
+    public PackageExpiryData getPackageExpiryData(@NotNull Connection connection,
+                                                  @NotNull UUID receiver,
+                                                  @NotNull Duration fromExpiry) throws SQLException {
+        Timestamp timestamp = Timestamp.from(Instant.now().plus(fromExpiry));
+        try (PreparedStatement statement = connection.prepareStatement(SELECT_NEAR_EXPIRY_PACKAGES)) {
+            statement.setBytes(1, getBytes(receiver));
+            statement.setTimestamp(2, timestamp);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (!resultSet.next()) {
+                    return new PackageExpiryData(0, null);
+                }
+                int aboutToExpire = resultSet.getInt(1);
+                Timestamp nearestExpiryTimestamp = resultSet.getTimestamp(2);
+                Date nearestExpiryDate = Date.from(nearestExpiryTimestamp.toInstant());
+                return new PackageExpiryData(aboutToExpire, nearestExpiryDate);
+            }
+        }
     }
 
     @Nonnull

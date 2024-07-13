@@ -11,6 +11,7 @@ import java.time.Duration;
 public record PostSettings(
         @Setting @Required long packageExpirySeconds,
         @Setting @Required long returnPackageExpirySeconds,
+        @Setting @Required long expiryNotificationExpiryThresholdSeconds,
         @Setting @Required double postPrice
 ) {
 

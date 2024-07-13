@@ -12,6 +12,7 @@ messages:
     unclaimed: <red>The user didn't claimed a package so it has been returned to you.
     insufficient-inventory-space: '<yellow>Warning: insufficient inventory space!'
     new-parcel: %player% sent you a new parcel!
+    parcel-expiry-notification: You have %parcels% outstanding parcels that are about to expire. Please collect them soon as a parcel will expire in %expiry%.
 
 
 prompt:

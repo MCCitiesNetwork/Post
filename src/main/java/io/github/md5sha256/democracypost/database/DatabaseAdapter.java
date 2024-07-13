@@ -74,4 +74,11 @@ public class DatabaseAdapter implements Closeable {
         }
     }
 
+    @Nonnull
+    public PackageExpiryData getPackageExpiryData(@Nonnull UUID receiver, @Nonnull Duration fromExpiry) throws SQLException {
+        try (Connection connection = this.dataSource.getConnection()) {
+            return this.schema.getPackageExpiryData(connection, receiver, fromExpiry);
+        }
+    }
+
 }
