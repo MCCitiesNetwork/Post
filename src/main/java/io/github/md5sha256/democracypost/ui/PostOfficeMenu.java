@@ -50,6 +50,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 public class PostOfficeMenu {
     private static final NumberFormat PRICE_FORMAT = NumberFormat.getCurrencyInstance();
@@ -84,11 +85,15 @@ public class PostOfficeMenu {
         this.economy = economy;
     }
 
+    private static void returnAndClearItems(HumanEntity player, Inventory inventory) {
+        ItemStack[] contents = inventory.getStorageContents();
+        InventoryUtil.addItems(player, Arrays.asList(contents));
+        inventory.clear();
+    }
+
     private static boolean handleInventoryClose(InventoryGui.Close close, Inventory storageInv) {
         HumanEntity player = close.getPlayer();
-        ItemStack[] contents = storageInv.getStorageContents();
-        InventoryUtil.addItems(player, Arrays.asList(contents));
-        storageInv.clear();
+        returnAndClearItems(player, storageInv);
         return true;
     }
 
@@ -154,7 +159,7 @@ public class PostOfficeMenu {
                 rows,
                 elementPanes(' '),
                 elementDrop('d', storageInv),
-                elementBack('b'),
+                elementBack('b', player -> returnAndClearItems(player, storageInv)),
                 elementPost('p', storageInv)
         );
         gui.setCloseAction(close -> handleInventoryClose(close, storageInv));
@@ -177,7 +182,7 @@ public class PostOfficeMenu {
                 rows,
                 elementPanes(' '),
                 elementPackageContents('d', postalPackage),
-                elementBack('b'),
+                elementBack('b', null),
                 elementCollectPackage('c', postalPackage)
         );
     }
@@ -220,7 +225,7 @@ public class PostOfficeMenu {
                 title,
                 rows,
                 elementPanes(' '),
-                elementBack('b'),
+                elementBack('b', null),
                 elementPrevious('p'),
                 elementNext('n'),
                 elementPackages('d', packages)
@@ -500,11 +505,11 @@ public class PostOfficeMenu {
         return new StaticGuiElement(c, itemStack);
     }
 
-    private GuiElement elementBack(char c) {
+    private GuiElement elementBack(char c, Consumer<HumanEntity> onGoBack) {
         final ItemStack itemStack = this.itemFactory.createBackButton();
         final Component displayName = this.messageContainer.messageFor("menu.back")
                 .decoration(TextDecoration.ITALIC, false);
-        return new GuiBackElement(c, itemStack, LegacyComponentSerializer.legacySection().serialize(displayName));
+        return new CustomBackElement(c, onGoBack, itemStack, LegacyComponentSerializer.legacySection().serialize(displayName));
     }
 
     @Nonnull
