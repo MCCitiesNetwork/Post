@@ -1,7 +1,7 @@
 plugins {
     java
     id("xyz.jpenilla.run-paper") version "2.3.0"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("io.github.goooler.shadow") version "8.1.8"
 }
 
 group = "io.github.md5sha256"
@@ -46,7 +46,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7")
     compileOnly("net.essentialsx:EssentialsX:2.20.1")
@@ -57,13 +57,13 @@ dependencies {
     implementation("de.themoep:inventorygui:1.6.1-SNAPSHOT")
     implementation("org.spongepowered:configurate-yaml:4.1.2")
     implementation("org.spongepowered:configurate-gson:4.1.2")
-    implementation("org.incendo:cloud-paper:2.0.0-beta.5") {
+    implementation("org.incendo:cloud-paper:2.0.0-beta.8") {
         exclude("com.google.guava")
     }
-    implementation("org.incendo:cloud-processors-confirmation:1.0.0-beta.2") {
+    implementation("org.incendo:cloud-processors-confirmation:1.0.0-beta.3") {
         exclude("com.google.guava")
     }
-    implementation("org.incendo:cloud-annotations:2.0.0-beta.2") {
+    implementation("org.incendo:cloud-annotations:2.0.0-rc.2") {
         exclude("com.google.guava")
     }
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
@@ -71,7 +71,7 @@ dependencies {
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
 }
 
-val targetJavaVersion = 17
+val targetJavaVersion = 21
 
 java.toolchain.languageVersion.set(JavaLanguageVersion.of(targetJavaVersion))
 
@@ -103,6 +103,10 @@ tasks {
     }
 
     runServer {
-        minecraftVersion("1.20.4")
+        minecraftVersion("1.21")
+        downloadPlugins {
+            github("EssentialsX", "essentials", "2.20.1", "EssentialsX-2.20.1.jar")
+            github("MilkBowl", "Vault", "1.7.3", "Vault.jar")
+        }
     }
 }

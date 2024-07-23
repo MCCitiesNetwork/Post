@@ -11,7 +11,7 @@ messages:
     mailbox: <red>You received a mailbox.
     unclaimed: <red>The user didn't claimed a package so it has been returned to you.
     insufficient-inventory-space: '<yellow>Warning: insufficient inventory space!'
-    new-parcel: %player% sent you a new parcel!
+    new-parcel: '%player% sent you a new parcel!'
     parcel-expiry-notification: You have %parcels% outstanding parcels that are about to expire. Please collect them soon as a parcel will expire in %expiry%.
 
 
@@ -42,7 +42,7 @@ menu:
         drop: <yellow>Parcel Drop
         collection-title: <yellow>Parcel Collection
         collect-parcel: <green>Collect Parcel
-        list: <yellow>%player%'s Parcels
+        list: "<yellow>%player%'s Parcels"
         post-parcel: <red>Send a package
         post-parcel-price: '<gray>Price: %price%'
         post-empty-parcel: <red><bold>Cannot send empty parcels!</bold>

@@ -2,6 +2,7 @@ package io.github.md5sha256.democracypost.command;
 
 import de.themoep.inventorygui.InventoryGui;
 import io.github.md5sha256.democracypost.ui.PostOfficeMenu;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.OfflinePlayer;
@@ -15,6 +16,7 @@ import org.incendo.cloud.annotations.Command;
 import org.incendo.cloud.annotations.Permission;
 import org.incendo.cloud.bukkit.CloudBukkitCapabilities;
 import org.incendo.cloud.execution.ExecutionCoordinator;
+import org.incendo.cloud.paper.LegacyPaperCommandManager;
 import org.incendo.cloud.paper.PaperCommandManager;
 
 import javax.annotation.Nonnull;
@@ -25,15 +27,10 @@ public class PostCommand {
 
     public PostCommand(@Nonnull Plugin plugin, @Nonnull PostOfficeMenu postOfficeMenu) {
         this.postOfficeMenu = postOfficeMenu;
-        var commandManager = new PaperCommandManager<>(
-                plugin,
-                ExecutionCoordinator.simpleCoordinator(),
-                SenderMapper.identity()
-        );
-        if (commandManager.hasCapability(CloudBukkitCapabilities.NATIVE_BRIGADIER)) {
-            commandManager.registerBrigadier();
-        }
-        var annotationParser = new AnnotationParser<>(commandManager, CommandSender.class);
+        var commandManager = PaperCommandManager.builder()
+                .executionCoordinator(ExecutionCoordinator.simpleCoordinator())
+                .buildOnEnable(plugin);
+        var annotationParser = new AnnotationParser<>(commandManager, CommandSourceStack.class);
         annotationParser.parse(this);
     }
 
@@ -56,17 +53,22 @@ public class PostCommand {
     @Command("post view <player>")
     @Permission("democracypost.view")
     public void commandView(
-            @Nonnull Player sender,
+            @Nonnull CommandSourceStack senderSourceStack,
             @Nonnull @Argument(value = "player") OfflinePlayer who) {
+        CommandSender sender = senderSourceStack.getSender();
+        if (!(senderSourceStack.getExecutor() instanceof Player executor)) {
+            sender.sendMessage("Executor must be an instance of a player!");
+            return;
+        }
         // Prevent the sender from going "back"
-        InventoryGui.clearHistory(sender);
+        InventoryGui.clearHistory(executor);
         this.postOfficeMenu.createParcelListUi(who.getUniqueId()).whenComplete((gui, throwable) -> {
             if (throwable != null) {
                 sender.sendMessage(Component.text("Error occurred when retrieving packages for " + who.getName(),
                         NamedTextColor.RED));
                 return;
             }
-            gui.show(sender);
+            gui.show(executor);
         });
     }
 
