@@ -67,8 +67,8 @@ public final class DemocracyPost extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        this.postalPackageFactory = initPostalPackageFactory();
         this.mailService = new EssentialsMailService(this.messageContainer);
+        this.postalPackageFactory = initPostalPackageFactory();
         this.itemFactory = new UiItemFactory(this.settings.uiSettings());
         this.postOfficeMenu = new PostOfficeMenu(
                 this,
