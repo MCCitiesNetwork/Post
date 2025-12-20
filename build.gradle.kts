@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "io.github.md5sha256"
-version = "1.0.0-SNAPSHOT"
+version = "1.0.1-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -46,10 +46,18 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
-    compileOnly("com.github.MilkBowl:VaultAPI:1.7")
-    compileOnly("net.essentialsx:EssentialsX:2.20.1")
+    compileOnly("com.github.MilkBowl:VaultAPI:1.7") {
+        exclude(group = "org.bukkit", module = "bukkit")
+        exclude(group = "org.spigotmc", module = "spigot-api")
+        exclude(group = "io.papermc.paper", module = "paper-api")
+    }
+    compileOnly("net.essentialsx:EssentialsX:2.21.2") {
+        exclude(group = "org.bukkit", module = "bukkit")
+        exclude(group = "org.spigotmc", module = "spigot-api")
+        exclude(group = "io.papermc.paper", module = "paper-api")
+    }
     // Provided by spigot library
     compileOnly("org.mariadb.jdbc:mariadb-java-client:3.4.0")
     compileOnly("com.zaxxer:HikariCP:5.1.0")
@@ -57,13 +65,13 @@ dependencies {
     implementation("de.themoep:inventorygui:1.6.1-SNAPSHOT")
     implementation("org.spongepowered:configurate-yaml:4.1.2")
     implementation("org.spongepowered:configurate-gson:4.1.2")
-    implementation("org.incendo:cloud-paper:2.0.0-beta.8") {
+    implementation("org.incendo:cloud-paper:2.0.0-beta.10") {
         exclude("com.google.guava")
     }
-    implementation("org.incendo:cloud-processors-confirmation:1.0.0-beta.3") {
+    implementation("org.incendo:cloud-processors-confirmation:1.0.0-rc.1") {
         exclude("com.google.guava")
     }
-    implementation("org.incendo:cloud-annotations:2.0.0-rc.2") {
+    implementation("org.incendo:cloud-annotations:2.0.0") {
         exclude("com.google.guava")
     }
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
@@ -103,9 +111,9 @@ tasks {
     }
 
     runServer {
-        minecraftVersion("1.21")
+        minecraftVersion("1.21.8")
         downloadPlugins {
-            github("EssentialsX", "essentials", "2.20.1", "EssentialsX-2.20.1.jar")
+            github("EssentialsX", "essentials", "2.21.2", "EssentialsX-2.21.2.jar")
             github("MilkBowl", "Vault", "1.7.3", "Vault.jar")
         }
     }

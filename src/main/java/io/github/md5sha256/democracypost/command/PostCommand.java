@@ -9,6 +9,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.checkerframework.checker.units.qual.A;
 import org.incendo.cloud.SenderMapper;
 import org.incendo.cloud.annotations.AnnotationParser;
 import org.incendo.cloud.annotations.Argument;
@@ -18,6 +19,9 @@ import org.incendo.cloud.bukkit.CloudBukkitCapabilities;
 import org.incendo.cloud.execution.ExecutionCoordinator;
 import org.incendo.cloud.paper.LegacyPaperCommandManager;
 import org.incendo.cloud.paper.PaperCommandManager;
+import org.incendo.cloud.paper.util.sender.PaperSimpleSenderMapper;
+import org.incendo.cloud.paper.util.sender.PlayerSource;
+import org.incendo.cloud.paper.util.sender.Source;
 
 import javax.annotation.Nonnull;
 
@@ -27,10 +31,10 @@ public class PostCommand {
 
     public PostCommand(@Nonnull Plugin plugin, @Nonnull PostOfficeMenu postOfficeMenu) {
         this.postOfficeMenu = postOfficeMenu;
-        var commandManager = PaperCommandManager.builder()
+        var commandManager = PaperCommandManager.builder(PaperSimpleSenderMapper.simpleSenderMapper())
                 .executionCoordinator(ExecutionCoordinator.simpleCoordinator())
                 .buildOnEnable(plugin);
-        var annotationParser = new AnnotationParser<>(commandManager, CommandSourceStack.class);
+        var annotationParser = new AnnotationParser<>(commandManager, Source.class);
         annotationParser.parse(this);
     }
 
@@ -53,22 +57,35 @@ public class PostCommand {
     @Command("post view <player>")
     @Permission("democracypost.view")
     public void commandView(
-            @Nonnull CommandSourceStack senderSourceStack,
+            @Nonnull PlayerSource playerSource,
             @Nonnull @Argument(value = "player") OfflinePlayer who) {
-        CommandSender sender = senderSourceStack.getSender();
-        if (!(senderSourceStack.getExecutor() instanceof Player executor)) {
-            sender.sendMessage("Executor must be an instance of a player!");
-            return;
-        }
+        Player sender = playerSource.source();
         // Prevent the sender from going "back"
-        InventoryGui.clearHistory(executor);
+        InventoryGui.clearHistory(sender);
         this.postOfficeMenu.createParcelListUi(who.getUniqueId()).whenComplete((gui, throwable) -> {
             if (throwable != null) {
                 sender.sendMessage(Component.text("Error occurred when retrieving packages for " + who.getName(),
                         NamedTextColor.RED));
                 return;
             }
-            gui.show(executor);
+            gui.show(sender);
+        });
+    }
+
+    @Command("post view <player> <targetPlayer>")
+    @Permission("democracypost.view.other")
+    public void commandViewOther(
+            @Nonnull @Argument(value = "player") OfflinePlayer who,
+            @Nonnull @Argument(value = "targetPlayer") Player toOpen) {
+        // Prevent the sender from going "back"
+        InventoryGui.clearHistory(toOpen);
+        this.postOfficeMenu.createParcelListUi(who.getUniqueId()).whenComplete((gui, throwable) -> {
+            if (throwable != null) {
+                toOpen.sendMessage(Component.text("Error occurred when retrieving packages for " + who.getName(),
+                        NamedTextColor.RED));
+                return;
+            }
+            gui.show(toOpen);
         });
     }
 
