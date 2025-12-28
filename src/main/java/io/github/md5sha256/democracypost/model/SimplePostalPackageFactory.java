@@ -66,7 +66,7 @@ public class SimplePostalPackageFactory implements PostalPackageFactory {
                 logger.fine("Posting package: " + postalPackage.id() + " sender: " + sender + " receiver: " + recipient);
                 this.adapter.addPackage(postalPackage);
                 scheduler.runTask(this.plugin, () -> {
-                    OfflinePlayer senderPlayer = this.plugin.getServer().getOfflinePlayer(recipient);
+                    OfflinePlayer senderPlayer = this.plugin.getServer().getOfflinePlayer(sender);
                     this.mailService.notifyNewParcel(recipient, senderPlayer.getName());
                 });
             } catch (SQLException ex) {
