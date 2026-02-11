@@ -143,6 +143,10 @@ public class PostOfficeMenu {
     }
 
     public InventoryGui createParcelPostUi() {
+        return createParcelPostUi(null);
+    }
+
+    public InventoryGui createParcelPostUi(@javax.annotation.Nullable OfflinePlayer recipient) {
         String[] rows = new String[]{
                 "         ",
                 " ddddddd ",
@@ -154,13 +158,14 @@ public class PostOfficeMenu {
         // blank space = panes
         // b = back, p = post parcel, e = exit
         Inventory storageInv = this.plugin.getServer().createInventory(null, 9 * 3);
+        UUID recipientUuid = recipient != null && recipient.hasPlayedBefore() ? recipient.getUniqueId() : null;
         InventoryGui gui = createGui(
                 this.messageContainer.messageFor("menu.parcel.drop"),
                 rows,
                 elementPanes(' '),
                 elementDrop('d', storageInv),
                 elementBack('b', player -> returnAndClearItems(player, storageInv)),
-                elementPost('p', storageInv)
+                elementPost('p', storageInv, recipientUuid)
         );
         gui.setCloseAction(close -> handleInventoryClose(close, storageInv));
         return gui;
@@ -413,7 +418,7 @@ public class PostOfficeMenu {
                 LegacyComponentSerializer.legacySection().serialize(displayName));
     }
 
-    private GuiElement elementPost(char c, Inventory storageInv) {
+    private GuiElement elementPost(char c, Inventory storageInv, @javax.annotation.Nullable UUID recipientUuid) {
         ItemStack itemStack = this.itemFactory.createSendPackageButton();
         ItemMeta meta = itemStack.getItemMeta();
         Component displayName = this.messageContainer.messageFor("menu.main.post-parcel")
@@ -422,7 +427,7 @@ public class PostOfficeMenu {
         itemStack.setItemMeta(meta);
         StaticGuiElement element = new StaticGuiElement(c, itemStack);
         element.setAction(action -> {
-            processPost(action, element, itemStack, storageInv);
+            processPost(action, element, itemStack, storageInv, recipientUuid);
             return true;
         });
         return element;
@@ -432,9 +437,9 @@ public class PostOfficeMenu {
             GuiElement.Click action,
             StaticGuiElement element,
             ItemStack display,
-            Inventory storageInv) {
-        // Don't clear the storage inv, items will be added back
-        if (!(action.getWhoClicked() instanceof Conversable conversable)) {
+            Inventory storageInv,
+            @javax.annotation.Nullable UUID recipientUuid) {
+        if (!(action.getWhoClicked() instanceof Player player)) {
             return;
         }
         List<ItemStack> items = new ArrayList<>();
@@ -455,6 +460,36 @@ public class PostOfficeMenu {
         }
         // Clear the storage inv here
         storageInv.clear();
+
+        if (recipientUuid != null) {
+            // Send directly to pre-specified recipient (no prompt)
+            OfflinePlayer recipient = this.plugin.getServer().getOfflinePlayer(recipientUuid);
+            if (!recipient.hasPlayedBefore()) {
+                String name = recipient.getName() != null ? recipient.getName() : recipientUuid.toString();
+                player.sendMessage(this.messageContainer.messageFor("prompt.post-parcel.unknown-player")
+                        .replaceText(builder -> builder.matchLiteral("%player%").replacement(name)));
+                InventoryUtil.addItems(player, items);
+                return;
+            }
+            if (player.getUniqueId().equals(recipientUuid)) {
+                player.sendMessage(this.messageContainer.messageFor("prompt.post-parcel.send-parcel-self"));
+                InventoryUtil.addItems(player, items);
+                return;
+            }
+            var response = this.economy.withdrawPlayer(player, this.postSettings.postPrice());
+            if (!response.transactionSuccess()) {
+                player.sendMessage(this.messageContainer.messageFor("prompt.post-parcel.insufficient-balance"));
+                InventoryUtil.addItems(player, items);
+                return;
+            }
+            this.postalPackageFactory.createAndPostPackage(player.getUniqueId(), recipientUuid, items, false);
+            player.sendMessage(this.messageContainer.messageFor("prompt.post-parcel.send-parcel-success"));
+            action.getGui().close(player, true);
+            return;
+        }
+
+        // No recipient: start conversation to ask for username
+        Conversable conversable = (Conversable) player;
         // Copy the current history
         Deque<InventoryGui> history = new ArrayDeque<>(InventoryGui.getHistory(action.getWhoClicked()));
         // Remove the current UI so it isn't added back
@@ -477,7 +512,6 @@ public class PostOfficeMenu {
                 .buildConversation(conversable);
         conversation.addConversationAbandonedListener(event -> {
             if (!event.gracefulExit()) {
-                // If the conversation is abandoned, give the items back to the player
                 InventoryUtil.addItems(action.getWhoClicked(), items);
             }
             Conversable who = event.getContext().getForWhom();
@@ -488,7 +522,6 @@ public class PostOfficeMenu {
                 }
             }
         });
-        // Start conversation to send
         conversation.begin();
     }
 

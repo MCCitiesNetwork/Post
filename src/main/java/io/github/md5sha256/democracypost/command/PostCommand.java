@@ -9,7 +9,6 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.checkerframework.checker.units.qual.A;
 import org.incendo.cloud.SenderMapper;
 import org.incendo.cloud.annotations.AnnotationParser;
 import org.incendo.cloud.annotations.Argument;
@@ -52,6 +51,19 @@ public class PostCommand {
                     }
                     gui.show(player);
                 });
+    }
+
+    @Command("post open <player> <target>")
+    @Permission("democracypost.open")
+    public void commandOpenWithTarget(
+            @Nonnull @Argument(value = "player") Player player,
+            @Nonnull @Argument(value = "target") OfflinePlayer target
+    ) {
+        if (!target.hasPlayedBefore()) {
+            player.sendMessage(Component.text("Unknown or invalid target player.", NamedTextColor.RED));
+            return;
+        }
+        this.postOfficeMenu.createParcelPostUi(target).show(player);
     }
 
     @Command("post view <player>")
