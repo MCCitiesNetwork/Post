@@ -56,6 +56,11 @@ public final class DemocracyPost extends JavaPlugin {
         if (!isEnabled()) {
             return;
         }
+        if (this.databaseAdapter == null) {
+            getLogger().severe("Database was not initialized (onLoad failed). Plugin will not enable.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
             getLogger().severe("Missing Vault!");
             getServer().getPluginManager().disablePlugin(this);
@@ -89,6 +94,9 @@ public final class DemocracyPost extends JavaPlugin {
         getServer().getScheduler().runTaskTimerAsynchronously(
                 this,
                 () -> {
+                    if (this.databaseAdapter == null) {
+                        return;
+                    }
                     getLogger().fine("Transferring expired packages...");
                     try {
                         this.databaseAdapter.transferExpiredPackages(returnPackageExpiryDuration);
