@@ -55,6 +55,10 @@ public class DatabaseAdapter implements Closeable {
         }
     }
 
+    public boolean isParcelTooLarge(@Nonnull PostalPackage postalPackage) {
+        return this.schema.isParcelTooLarge(postalPackage);
+    }
+
     @Nonnull
     public List<PostalPackage> getPackagesForRecipient(@Nonnull UUID recipient) throws SQLException {
         try (Connection connection = this.dataSource.getConnection()) {

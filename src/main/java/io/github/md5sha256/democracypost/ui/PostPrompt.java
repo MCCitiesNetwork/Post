@@ -57,7 +57,7 @@ public class PostPrompt extends StringPrompt {
             return this;
         }
         Conversable sender = context.getForWhom();
-        if (!(context.getForWhom() instanceof Player player)) {
+        if (!(sender instanceof Player player)) {
             return END_OF_CONVERSATION;
         }
         OfflinePlayer offlinePlayer = this.server.getOfflinePlayerIfCached(input);
@@ -77,7 +77,20 @@ public class PostPrompt extends StringPrompt {
             sender.sendRawMessage(this.messageContainer.plaintextMessageFor("prompt.post-parcel.insufficient-balance"));
             return END_OF_CONVERSATION;
         }
-        this.postalPackageFactory.createAndPostPackage(player.getUniqueId(), recipient, this.contents, false);
+        this.postalPackageFactory.createAndPostPackage(player.getUniqueId(), recipient, this.contents, false)
+                .thenAccept(result -> {
+                    var messageKey = switch (result) {
+                        case SUCCESS -> null;
+                        case TOO_LARGE -> "prompt.post-parcel.parcel-too-large";
+                        case UNKNOWN_ERROR -> "prompt.post-parcel.send-parcel-failed";
+                    };
+                    if (messageKey == null) {
+                        return;
+                    }
+                    player.getInventory().addItem(this.contents.toArray(ItemStack[]::new));
+                    var message = this.messageContainer.plaintextMessageFor(messageKey);
+                    sender.sendRawMessage(message);
+                });
         sender.sendRawMessage(this.messageContainer.plaintextMessageFor("prompt.post-parcel.send-parcel-success"));
         return END_OF_CONVERSATION;
     }

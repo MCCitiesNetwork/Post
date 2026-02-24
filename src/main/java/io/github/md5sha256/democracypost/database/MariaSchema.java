@@ -5,6 +5,7 @@ import io.github.md5sha256.democracypost.model.PostalPackage;
 import io.github.md5sha256.democracypost.serializer.Serializers;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.gson.GsonConfigurationLoader;
@@ -31,7 +32,6 @@ import java.util.List;
 import java.util.UUID;
 
 public class MariaSchema implements DatabaseSchema {
-
 
     private static final String CREATE_POST_PACKAGES_TABLE = """
             CREATE TABLE POST_PACKAGE (
@@ -105,6 +105,12 @@ public class MariaSchema implements DatabaseSchema {
     @Override
     public String formatJdbcUrl(@NotNull String url) {
         return "jdbc:mariadb://" + url;
+    }
+
+    @Override
+    public boolean isParcelTooLarge(@NonNull PostalPackage postalPackage) {
+        // 65535 is the BLOB max size
+        return getBytes(postalPackage.content().items()).length > 65535;
     }
 
     @Override

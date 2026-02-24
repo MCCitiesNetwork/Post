@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
 
 public class SimplePostalPackageFactory implements PostalPackageFactory {
@@ -54,25 +55,35 @@ public class SimplePostalPackageFactory implements PostalPackageFactory {
     }
 
     @Override
-    public void createAndPostPackage(@NotNull UUID sender,
-                                     @NotNull UUID recipient,
-                                     @NotNull List<ItemStack> contents,
-                                     boolean isReturnPackage) {
+    @Nonnull
+    public CompletableFuture<PostResult> createAndPostPackage(@NotNull UUID sender,
+                                                  @NotNull UUID recipient,
+                                                  @NotNull List<ItemStack> contents,
+                                                  boolean isReturnPackage) {
+        CompletableFuture<PostResult> future = new CompletableFuture<>();
         Logger logger = this.plugin.getLogger();
         BukkitScheduler scheduler = this.plugin.getServer().getScheduler();
+        PostalPackage postalPackage = createPackage(sender, recipient, contents, isReturnPackage);
+        if (this.adapter.isParcelTooLarge(postalPackage)) {
+            future.complete(PostResult.TOO_LARGE);
+            return future;
+        }
         scheduler.runTaskAsynchronously(this.plugin, () -> {
             try {
-                PostalPackage postalPackage = createPackage(sender, recipient, contents, isReturnPackage);
+
                 logger.fine("Posting package: " + postalPackage.id() + " sender: " + sender + " receiver: " + recipient);
                 this.adapter.addPackage(postalPackage);
+                future.complete(PostResult.SUCCESS);
                 scheduler.runTask(this.plugin, () -> {
                     OfflinePlayer senderPlayer = this.plugin.getServer().getOfflinePlayer(sender);
                     this.mailService.notifyNewParcel(recipient, senderPlayer.getName());
                 });
             } catch (SQLException ex) {
                 logger.warning("Failed to post package!");
+                future.complete(PostResult.UNKNOWN_ERROR);
                 ex.printStackTrace();
             }
         });
+        return future;
     }
 }

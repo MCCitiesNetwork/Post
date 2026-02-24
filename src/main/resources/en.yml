@@ -22,6 +22,8 @@ prompt:
         unknown-player: 'Unknown player: %player%'
         send-parcel-self: "You can't mail a parcel to yourself!"
         send-parcel-success: "Parcel mailed!"
+        send-parcel-failed: "Parcel mailing failed, the parcel has been returned to your inventory."
+        parcel-too-large: "Parcel too large to send, please split up your items into smaller parcels!"
 
 menu:
 

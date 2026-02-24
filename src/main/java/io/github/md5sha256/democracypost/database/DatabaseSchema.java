@@ -32,4 +32,6 @@ public interface DatabaseSchema {
     @Nonnull
     PackageExpiryData getPackageExpiryData(@Nonnull Connection connection, @Nonnull UUID receiver, @Nonnull Duration fromExpiry)
             throws SQLException;
+
+    boolean isParcelTooLarge(@Nonnull PostalPackage postalPackage);
 }
