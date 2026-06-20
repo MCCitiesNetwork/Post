@@ -173,7 +173,7 @@ public final class DemocracyPost extends JavaPlugin {
 
     @Nonnull
     private DatabaseAdapter initDatabase() throws IOException {
-        DatabaseAdapter adapter = new DatabaseAdapter(this.settings.databaseSettings());
+        DatabaseAdapter adapter = new DatabaseAdapter(this.settings.databaseSettings(), getLogger(), this.settings.postSettings().skipUndeserializableItems());
         try {
             adapter.init();
         } catch (SQLException ex) {

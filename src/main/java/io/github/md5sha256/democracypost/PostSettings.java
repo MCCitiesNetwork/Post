@@ -12,7 +12,8 @@ public record PostSettings(
         @Setting @Required long packageExpirySeconds,
         @Setting @Required long returnPackageExpirySeconds,
         @Setting @Required long expiryNotificationExpiryThresholdSeconds,
-        @Setting @Required double postPrice
+        @Setting @Required double postPrice,
+        @Setting @Required boolean skipUndeserializableItems
 ) {
 
     @Nonnull
