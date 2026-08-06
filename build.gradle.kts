@@ -1,7 +1,7 @@
 plugins {
     java
-    id("xyz.jpenilla.run-paper") version "2.3.0"
-    id("com.gradleup.shadow") version "9.3.1"
+    id("xyz.jpenilla.run-paper") version "3.0.2"
+    id("com.gradleup.shadow") version "9.6.1"
 }
 
 group = "io.github.md5sha256"
@@ -48,7 +48,7 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
-    compileOnly("com.github.MilkBowl:VaultAPI:1.7") {
+    compileOnly("com.github.MilkBowl:VaultAPI:1.7.1") {
         exclude(group = "org.bukkit", module = "bukkit")
         exclude(group = "org.spigotmc", module = "spigot-api")
         exclude(group = "io.papermc.paper", module = "paper-api")
@@ -59,24 +59,24 @@ dependencies {
         exclude(group = "io.papermc.paper", module = "paper-api")
     }
     // Provided by spigot library
-    compileOnly("org.mariadb.jdbc:mariadb-java-client:3.4.0")
-    compileOnly("com.zaxxer:HikariCP:5.1.0")
+    compileOnly("org.mariadb.jdbc:mariadb-java-client:3.5.10")
+    compileOnly("com.zaxxer:HikariCP:7.1.0")
     // Shaded libs
     implementation("de.themoep:inventorygui:1.6.1-SNAPSHOT")
-    implementation("org.spongepowered:configurate-yaml:4.1.2")
-    implementation("org.spongepowered:configurate-gson:4.1.2")
-    implementation("org.incendo:cloud-paper:2.0.0-beta.10") {
+    implementation("org.spongepowered:configurate-yaml:4.2.0")
+    implementation("org.spongepowered:configurate-gson:4.2.0")
+    implementation("org.incendo:cloud-paper:2.0.0") {
         exclude("com.google.guava")
     }
     implementation("org.incendo:cloud-processors-confirmation:1.0.0-rc.1") {
         exclude("com.google.guava")
     }
-    implementation("org.incendo:cloud-annotations:2.0.0") {
+    implementation("org.incendo:cloud-annotations:2.1.0") {
         exclude("com.google.guava")
     }
-    testImplementation(platform("org.junit:junit-bom:5.10.2"))
+    testImplementation(platform("org.junit:junit-bom:6.1.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 val targetJavaVersion = 21
