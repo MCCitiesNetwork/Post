@@ -14,6 +14,9 @@ post-settings:
   expiry-notification-expiry-threshold-seconds: 259200
   post-price: 0.50
   skip-undeserializable-items: true
+  # java.text.DecimalFormat pattern used to render prices.
+  # Any literal text around the number is kept as-is, so replace the '$' to change the currency symbol.
+  price-format-pattern: '$#,##0.00'
 
 save-duration-seconds: 600
 join-message-delay-seconds: 10

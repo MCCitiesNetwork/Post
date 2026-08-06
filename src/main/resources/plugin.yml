@@ -15,5 +15,5 @@ commands:
     permission: "democracypost.view"
 
 libraries:
-  - 'org.mariadb.jdbc:mariadb-java-client:3.4.0'
-  - 'com.zaxxer:HikariCP:5.1.0'
+  - 'org.mariadb.jdbc:mariadb-java-client:3.5.10'
+  - 'com.zaxxer:HikariCP:7.1.0'

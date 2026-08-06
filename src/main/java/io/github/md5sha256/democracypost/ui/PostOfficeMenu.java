@@ -40,8 +40,6 @@ import org.bukkit.scheduler.BukkitScheduler;
 import javax.annotation.Nonnull;
 import java.sql.SQLException;
 import java.text.DateFormat;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -53,7 +51,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class PostOfficeMenu {
-    private static final NumberFormat PRICE_FORMAT = NumberFormat.getCurrencyInstance();
 
     private final JavaPlugin plugin;
     private final ConversationFactory conversationFactory;
@@ -285,8 +282,7 @@ public class PostOfficeMenu {
         Component displayName = this.messageContainer.messageFor("menu.parcel.post-parcel")
                 .decoration(TextDecoration.ITALIC, false);
         meta.displayName(displayName);
-        double price = this.postSettings.postPrice();
-        String formattedPrice = PRICE_FORMAT.format(price);
+        String formattedPrice = this.postSettings.formatPrice(this.postSettings.postPrice());
         Component priceIndicator = this.messageContainer.messageFor("menu.parcel.post-parcel-price")
                 .replaceText(builder -> builder.matchLiteral("%price%").replacement(formattedPrice))
                 .decoration(TextDecoration.ITALIC, false);
