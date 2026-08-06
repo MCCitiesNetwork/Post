@@ -26,12 +26,21 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Logger;
+
 
 public class MariaSchema implements DatabaseSchema {
+
+    private final Logger logger;
+    private final boolean skipUndeserializableItems;
+
+    public MariaSchema(@Nonnull Logger logger, boolean skipUndeserializableItems) {
+        this.logger = logger;
+        this.skipUndeserializableItems = skipUndeserializableItems;
+    }
 
     private static final String CREATE_POST_PACKAGES_TABLE = """
             CREATE TABLE POST_PACKAGE (
@@ -225,7 +234,21 @@ public class MariaSchema implements DatabaseSchema {
                 .defaultOptions(options -> options.serializers(Serializers.defaults()));
         try {
             ConfigurationNode node = builder.buildAndLoadString(s);
-            return node.getList(ItemStack.class, Collections.emptyList());
+            List<ItemStack> items = new ArrayList<>();
+            for (ConfigurationNode child : node.childrenList()) {
+                try {
+                    ItemStack item = child.get(ItemStack.class);
+                    if (item != null) {
+                        items.add(item);
+                    }
+                } catch (ConfigurateException ex) {
+                    if (!this.skipUndeserializableItems) {
+                        throw new IllegalStateException("Failed to deserialize item stacks!", ex);
+                    }
+                    this.logger.warning("Skipping item that could not be deserialized: " + ex.getMessage());
+                }
+            }
+            return items;
         } catch (ConfigurateException ex) {
             throw new IllegalStateException("Failed to deserialize item stacks!", ex);
         }

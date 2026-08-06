@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 public class DatabaseAdapter implements Closeable {
 
@@ -20,9 +21,9 @@ public class DatabaseAdapter implements Closeable {
 
     private HikariDataSource dataSource;
 
-    public DatabaseAdapter(@Nonnull DatabaseSettings databaseSettings) {
+    public DatabaseAdapter(@Nonnull DatabaseSettings databaseSettings, @Nonnull Logger logger, boolean skipUndeserializableItems) {
         this.databaseSettings = databaseSettings;
-        this.schema = new MariaSchema();
+        this.schema = new MariaSchema(logger, skipUndeserializableItems);
     }
 
     public void init() throws SQLException {
