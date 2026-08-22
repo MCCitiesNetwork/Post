@@ -4,7 +4,7 @@ main: io.github.md5sha256.democracypost.DemocracyPost
 api-version: '26.1.2'
 authors: [andrewandy]
 depend: ['Vault', 'Essentials']
-softdepend: ['HeadDatabase']
+softdepend: ['HeadDatabase', 'PlayerNotifications']
 
 commands:
   post open:

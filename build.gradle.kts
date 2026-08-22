@@ -25,6 +25,10 @@ repositories {
         }
     }
     maven {
+        name = "mccities"
+        url = uri("https://maven.minecraftcitiesnetwork.com/releases")
+    }
+    maven {
         name = "jitpack"
         url = uri("https://jitpack.io")
     }
@@ -48,6 +52,7 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:26.1.2.build.74-stable")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
+    compileOnly("io.github.md5sha256:player-notifications-api:1.0.1")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1") {
         exclude(group = "org.bukkit", module = "bukkit")
         exclude(group = "org.spigotmc", module = "spigot-api")
@@ -74,6 +79,8 @@ dependencies {
     implementation("org.incendo:cloud-annotations:2.1.0") {
         exclude("com.google.guava")
     }
+    testImplementation("io.papermc.paper:paper-api:26.1.2.build.74-stable")
+    testImplementation("io.github.md5sha256:player-notifications-api:1.0.1")
     testImplementation(platform("org.junit:junit-bom:6.1.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

@@ -5,6 +5,15 @@ import io.github.md5sha256.democracypost.database.DatabaseAdapter;
 import io.github.md5sha256.democracypost.heads.HeadDatabaseListener;
 import io.github.md5sha256.democracypost.localization.MessageContainer;
 import io.github.md5sha256.democracypost.model.PostalPackageFactory;
+import io.github.md5sha256.democracypost.notification.EssentialsMailService;
+import io.github.md5sha256.democracypost.notification.NoopParcelNotificationService;
+import io.github.md5sha256.democracypost.notification.NotificationBackend;
+import io.github.md5sha256.democracypost.notification.ParcelDataTypes;
+import io.github.md5sha256.democracypost.notification.ParcelNotificationBackends;
+import io.github.md5sha256.democracypost.notification.ParcelNotificationRenderer;
+import io.github.md5sha256.democracypost.notification.ParcelNotificationService;
+import io.github.md5sha256.democracypost.notification.PlayerNotificationsService;
+import io.github.md5sha256.playernotifications.api.NotificationService;
 import io.github.md5sha256.democracypost.model.SimplePostalPackageFactory;
 import io.github.md5sha256.democracypost.serializer.Serializers;
 import io.github.md5sha256.democracypost.ui.PostOfficeMenu;
@@ -25,6 +34,7 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.sql.SQLException;
 import java.time.Duration;
+import java.util.Locale;
 import java.util.Optional;
 
 public final class DemocracyPost extends JavaPlugin {
@@ -33,7 +43,8 @@ public final class DemocracyPost extends JavaPlugin {
     private PostalPackageFactory postalPackageFactory;
     private PostOfficeMenu postOfficeMenu;
     private MessageContainer messageContainer;
-    private EssentialsMailService mailService;
+    private ParcelNotificationService mailService;
+    private NotificationService notificationService;
     private Settings settings;
     private UiItemFactory itemFactory;
 
@@ -72,7 +83,7 @@ public final class DemocracyPost extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        this.mailService = new EssentialsMailService(this.messageContainer);
+        this.mailService = initNotificationService();
         this.postalPackageFactory = initPostalPackageFactory();
         this.itemFactory = new UiItemFactory(this.settings.uiSettings());
         this.postOfficeMenu = new PostOfficeMenu(
@@ -166,8 +177,48 @@ public final class DemocracyPost extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+        if (this.notificationService != null) {
+            // Leaving the renderer registered would strand it on this class loader across a reload.
+            ParcelDataTypes.unregisterAll(this.notificationService);
+            this.notificationService = null;
+        }
         if (this.databaseAdapter != null) {
             this.databaseAdapter.close();
+        }
+    }
+
+    /**
+     * Builds the parcel notification backend the config asks for, gated on what is installed.
+     *
+     * <p>PlayerNotifications API classes are only touched inside the branch that has already
+     * confirmed the service is registered: they are {@code compileOnly}, so naming one on a server
+     * without the plugin would fail to link.
+     */
+    @Nonnull
+    private ParcelNotificationService initNotificationService() {
+        NotificationBackend configured = this.settings.postSettings().notificationBackendOrDefault();
+        RegisteredServiceProvider<NotificationService> provider =
+                getServer().getServicesManager().getRegistration(NotificationService.class);
+        boolean essentialsAvailable = getServer().getPluginManager().isPluginEnabled("Essentials");
+        ParcelNotificationBackends.Choice choice =
+                ParcelNotificationBackends.choose(configured, provider != null, essentialsAvailable);
+        switch (choice) {
+            case PLAYER_NOTIFICATIONS -> {
+                NotificationService service = provider.getProvider();
+                ParcelDataTypes.registerAll(service, new ParcelNotificationRenderer(this.messageContainer));
+                this.notificationService = service;
+                getLogger().info("Delivering parcel notices through PlayerNotifications.");
+                return new PlayerNotificationsService(service::enqueueNotification);
+            }
+            case ESSENTIALS -> {
+                getLogger().info("Delivering parcel notices as Essentials mail.");
+                return new EssentialsMailService(this.messageContainer);
+            }
+            default -> {
+                getLogger().severe("notification-backend is '" + configured.name().toLowerCase(Locale.ROOT)
+                        + "' but that plugin is not available; parcel notices are disabled.");
+                return new NoopParcelNotificationService(getLogger());
+            }
         }
     }
 

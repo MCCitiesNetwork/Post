@@ -1,5 +1,6 @@
 package io.github.md5sha256.democracypost;
 
+import io.github.md5sha256.democracypost.notification.NotificationBackend;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Required;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
@@ -18,7 +19,8 @@ public record PostSettings(
         @Setting @Required long expiryNotificationExpiryThresholdSeconds,
         @Setting @Required double postPrice,
         @Setting @Required boolean skipUndeserializableItems,
-        @Setting @Nullable String priceFormatPattern
+        @Setting @Nullable String priceFormatPattern,
+        @Setting @Nullable NotificationBackend notificationBackend
 ) {
 
     /**
@@ -37,6 +39,15 @@ public record PostSettings(
                 : this.priceFormatPattern;
         DecimalFormat format = new DecimalFormat(pattern, DecimalFormatSymbols.getInstance(Locale.ROOT));
         return format.format(amount);
+    }
+
+    /**
+     * The configured notification backend, defaulting to {@link NotificationBackend#AUTO} when the
+     * setting is absent — as it is in every config file written before the setting existed.
+     */
+    @Nonnull
+    public NotificationBackend notificationBackendOrDefault() {
+        return this.notificationBackend == null ? NotificationBackend.AUTO : this.notificationBackend;
     }
 
     @Nonnull

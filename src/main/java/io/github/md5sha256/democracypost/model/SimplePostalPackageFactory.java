@@ -1,6 +1,6 @@
 package io.github.md5sha256.democracypost.model;
 
-import io.github.md5sha256.democracypost.EssentialsMailService;
+import io.github.md5sha256.democracypost.notification.ParcelNotificationService;
 import io.github.md5sha256.democracypost.database.DatabaseAdapter;
 import io.github.md5sha256.democracypost.database.UserDataStore;
 import io.github.md5sha256.democracypost.localization.MessageContainer;
@@ -26,11 +26,11 @@ public class SimplePostalPackageFactory implements PostalPackageFactory {
     private final DatabaseAdapter adapter;
     private final Duration expiryDuration;
     private final Duration returnPackageExpiryDuration;
-    private final EssentialsMailService mailService;
+    private final ParcelNotificationService mailService;
 
     public SimplePostalPackageFactory(
             @Nonnull Plugin plugin,
-            @Nonnull EssentialsMailService mailService,
+            @Nonnull ParcelNotificationService mailService,
             @Nonnull DatabaseAdapter adapter,
             @Nonnull Duration expiryDuration,
             @Nonnull Duration returnPackageExpiryDuration
@@ -76,7 +76,13 @@ public class SimplePostalPackageFactory implements PostalPackageFactory {
                 future.complete(PostResult.SUCCESS);
                 scheduler.runTask(this.plugin, () -> {
                     OfflinePlayer senderPlayer = this.plugin.getServer().getOfflinePlayer(sender);
-                    this.mailService.notifyNewParcel(recipient, senderPlayer.getName());
+                    String senderName = senderPlayer.getName();
+                    this.mailService.notifyNewParcel(
+                            recipient,
+                            sender,
+                            senderName == null ? sender.toString() : senderName,
+                            postalPackage.id(),
+                            postalPackage.expiryDate().toInstant());
                 });
             } catch (SQLException ex) {
                 logger.warning("Failed to post package!");
