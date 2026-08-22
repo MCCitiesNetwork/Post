@@ -1,6 +1,6 @@
 plugins {
     java
-    id("xyz.jpenilla.run-paper") version "3.0.2"
+    id("xyz.jpenilla.run-paper") version "3.1.0"
     id("com.gradleup.shadow") version "9.6.1"
 }
 
@@ -46,7 +46,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:26.1.2.build.74-stable")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1") {
         exclude(group = "org.bukkit", module = "bukkit")
@@ -74,12 +74,12 @@ dependencies {
     implementation("org.incendo:cloud-annotations:2.1.0") {
         exclude("com.google.guava")
     }
-    testImplementation(platform("org.junit:junit-bom:6.1.2"))
+    testImplementation(platform("org.junit:junit-bom:6.1.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-val targetJavaVersion = 21
+val targetJavaVersion = 25
 
 java.toolchain.languageVersion.set(JavaLanguageVersion.of(targetJavaVersion))
 
@@ -111,7 +111,7 @@ tasks {
     }
 
     runServer {
-        minecraftVersion("1.21.8")
+        minecraftVersion("26.1.2")
         downloadPlugins {
             github("EssentialsX", "essentials", "2.21.2", "EssentialsX-2.21.2.jar")
             github("MilkBowl", "Vault", "1.7.3", "Vault.jar")
