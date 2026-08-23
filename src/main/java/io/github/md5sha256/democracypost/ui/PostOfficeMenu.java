@@ -5,7 +5,6 @@ import de.themoep.inventorygui.GuiBackElement;
 import de.themoep.inventorygui.GuiElement;
 import de.themoep.inventorygui.GuiElementGroup;
 import de.themoep.inventorygui.GuiPageElement;
-import de.themoep.inventorygui.GuiStorageElement;
 import de.themoep.inventorygui.InventoryGui;
 import de.themoep.inventorygui.StaticGuiElement;
 import io.github.md5sha256.democracypost.PostSettings;
@@ -31,7 +30,6 @@ import org.bukkit.conversations.ConversationFactory;
 import org.bukkit.conversations.Prompt;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -41,10 +39,7 @@ import javax.annotation.Nonnull;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Deque;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -61,6 +56,7 @@ public class PostOfficeMenu {
     private final UiItemFactory itemFactory;
     private final PostSettings postSettings;
     private final Economy economy;
+    private final ParcelDropMenu parcelDropMenu;
 
     public PostOfficeMenu(
             @Nonnull JavaPlugin plugin,
@@ -80,18 +76,7 @@ public class PostOfficeMenu {
         this.itemFactory = itemFactory;
         this.postSettings = postSettings;
         this.economy = economy;
-    }
-
-    private static void returnAndClearItems(HumanEntity player, Inventory inventory) {
-        ItemStack[] contents = inventory.getStorageContents();
-        InventoryUtil.addItems(player, Arrays.asList(contents));
-        inventory.clear();
-    }
-
-    private static boolean handleInventoryClose(InventoryGui.Close close, Inventory storageInv) {
-        HumanEntity player = close.getPlayer();
-        returnAndClearItems(player, storageInv);
-        return true;
+        this.parcelDropMenu = new ParcelDropMenu(plugin, messageContainer, itemFactory, this::postParcel);
     }
 
     private InventoryGui createGui(@Nonnull Component title, @Nonnull String[] rows, GuiElement... elements) {
@@ -139,33 +124,23 @@ public class PostOfficeMenu {
                 elementPackagesIcon('v', playerName, packages));
     }
 
-    public InventoryGui createParcelPostUi() {
-        return createParcelPostUi(null);
+    /**
+     * Opens the parcel drop screen, which is a plain container rather than an {@link InventoryGui}.
+     *
+     * @param player    the player posting the parcel
+     * @param recipient the addressee, or {@code null} to prompt for one after the items are dropped
+     * @param onBack    what to show when the player goes back, or {@code null} for no back button
+     */
+    public void openParcelPostUi(
+            @Nonnull Player player,
+            @javax.annotation.Nullable OfflinePlayer recipient,
+            @javax.annotation.Nullable Runnable onBack) {
+        UUID recipientUuid = recipient != null && recipient.hasPlayedBefore() ? recipient.getUniqueId() : null;
+        this.parcelDropMenu.open(player, recipientUuid, onBack);
     }
 
-    public InventoryGui createParcelPostUi(@javax.annotation.Nullable OfflinePlayer recipient) {
-        String[] rows = new String[]{
-                "         ",
-                " ddddddd ",
-                " ddddddd ",
-                " ddddddd ",
-                "   b p   ",
-        };
-        // d = space to drop
-        // blank space = panes
-        // b = back, p = post parcel, e = exit
-        Inventory storageInv = this.plugin.getServer().createInventory(null, 9 * 3);
-        UUID recipientUuid = recipient != null && recipient.hasPlayedBefore() ? recipient.getUniqueId() : null;
-        InventoryGui gui = createGui(
-                this.messageContainer.messageFor("menu.parcel.drop"),
-                rows,
-                elementPanes(' '),
-                elementDrop('d', storageInv),
-                elementBack('b', player -> returnAndClearItems(player, storageInv)),
-                elementPost('p', storageInv, recipientUuid)
-        );
-        gui.setCloseAction(close -> handleInventoryClose(close, storageInv));
-        return gui;
+    public void openParcelPostUi(@Nonnull Player player, @javax.annotation.Nullable OfflinePlayer recipient) {
+        openParcelPostUi(player, recipient, null);
     }
 
     private InventoryGui createParcelCollectionUi(PostalPackage postalPackage) {
@@ -305,7 +280,10 @@ public class PostOfficeMenu {
                 action.getGui().close(player);
                 return true;
             }
-            createParcelPostUi().show(action.getWhoClicked());
+            // The drop screen is not an InventoryGui, so it cannot use the gui history to go back:
+            // hand it this menu to reopen instead.
+            InventoryGui current = action.getGui();
+            openParcelPostUi(player, null, () -> current.show(player));
             return true;
         });
         return element;
@@ -414,49 +392,14 @@ public class PostOfficeMenu {
                 LegacyComponentSerializer.legacySection().serialize(displayName));
     }
 
-    private GuiElement elementPost(char c, Inventory storageInv, @javax.annotation.Nullable UUID recipientUuid) {
-        ItemStack itemStack = this.itemFactory.createSendPackageButton();
-        ItemMeta meta = itemStack.getItemMeta();
-        Component displayName = this.messageContainer.messageFor("menu.main.post-parcel")
-                        .decoration(TextDecoration.ITALIC, false);
-        meta.displayName(displayName);
-        itemStack.setItemMeta(meta);
-        StaticGuiElement element = new StaticGuiElement(c, itemStack);
-        element.setAction(action -> {
-            processPost(action, element, itemStack, storageInv, recipientUuid);
-            return true;
-        });
-        return element;
-    }
-
-    private void processPost(
-            GuiElement.Click action,
-            StaticGuiElement element,
-            ItemStack display,
-            Inventory storageInv,
+    /**
+     * Posts the items a player dropped into {@link ParcelDropMenu}. The drop screen is already
+     * closed by this point and no longer owns the items, so every failure path hands them back.
+     */
+    private void postParcel(
+            @Nonnull Player player,
+            @Nonnull List<ItemStack> items,
             @javax.annotation.Nullable UUID recipientUuid) {
-        if (!(action.getWhoClicked() instanceof Player player)) {
-            return;
-        }
-        List<ItemStack> items = new ArrayList<>();
-        for (ItemStack item : storageInv.getStorageContents()) {
-            if (item != null) {
-                items.add(item);
-            }
-        }
-        if (items.isEmpty()) {
-            ItemMeta updated = display.getItemMeta();
-            Component emptyParcelMessage = this.messageContainer.messageFor("menu.parcel.post-empty-parcel")
-                            .decoration(TextDecoration.ITALIC, false);
-            updated.lore(List.of(emptyParcelMessage));
-            display.setItemMeta(updated);
-            element.setItem(display);
-            action.getGui().draw();
-            return;
-        }
-        // Clear the storage inv here
-        storageInv.clear();
-
         if (recipientUuid != null) {
             // Send directly to pre-specified recipient (no prompt)
             OfflinePlayer recipient = this.plugin.getServer().getOfflinePlayer(recipientUuid);
@@ -480,20 +423,11 @@ public class PostOfficeMenu {
             }
             this.postalPackageFactory.createAndPostPackage(player.getUniqueId(), recipientUuid, items, false);
             player.sendMessage(this.messageContainer.messageFor("prompt.post-parcel.send-parcel-success"));
-            action.getGui().close(player, true);
             return;
         }
 
         // No recipient: start conversation to ask for username
         Conversable conversable = (Conversable) player;
-        // Copy the current history
-        Deque<InventoryGui> history = new ArrayDeque<>(InventoryGui.getHistory(action.getWhoClicked()));
-        // Remove the current UI so it isn't added back
-        history.pollLast();
-        action.getGui().close(action.getWhoClicked(), true);
-        while (!history.isEmpty()) {
-            InventoryGui.addHistory(action.getWhoClicked(), history.pollFirst());
-        }
         Prompt prompt = new PostPrompt(
                 items,
                 this.postalPackageFactory,
@@ -508,7 +442,7 @@ public class PostOfficeMenu {
                 .buildConversation(conversable);
         conversation.addConversationAbandonedListener(event -> {
             if (!event.gracefulExit()) {
-                InventoryUtil.addItems(action.getWhoClicked(), items);
+                InventoryUtil.addItems(player, items);
             }
             Conversable who = event.getContext().getForWhom();
             if (who instanceof HumanEntity humanEntity) {
@@ -519,10 +453,6 @@ public class PostOfficeMenu {
             }
         });
         conversation.begin();
-    }
-
-    private GuiStorageElement elementDrop(char c, Inventory inventory) {
-        return new GuiStorageElement(c, inventory);
     }
 
     @Nonnull

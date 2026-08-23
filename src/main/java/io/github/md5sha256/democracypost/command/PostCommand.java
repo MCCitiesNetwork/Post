@@ -62,7 +62,7 @@ public class PostCommand {
             player.sendMessage(Component.text("Unknown or invalid target player.", NamedTextColor.RED));
             return;
         }
-        this.postOfficeMenu.createParcelPostUi(target).show(player);
+        this.postOfficeMenu.openParcelPostUi(player, target);
     }
 
     @Command("post view <player>")
