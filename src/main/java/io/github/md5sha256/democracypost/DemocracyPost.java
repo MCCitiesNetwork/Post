@@ -36,6 +36,7 @@ import java.sql.SQLException;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.logging.Level;
 
 public final class DemocracyPost extends JavaPlugin {
 
@@ -50,30 +51,22 @@ public final class DemocracyPost extends JavaPlugin {
 
     @Override
     public void onLoad() {
+        // A plugin cannot be disabled before it is enabled, so failures here leave the adapter
+        // null and onEnable() does the disabling.
         try {
             initDataFolder();
             this.messageContainer = loadMessages();
             this.settings = loadSettings();
             this.databaseAdapter = initDatabase();
         } catch (IOException ex) {
-            ex.printStackTrace();
-            getLogger().severe("Failed to initialize!");
-            getServer().getPluginManager().disablePlugin(this);
+            getLogger().log(Level.SEVERE, "Failed to initialize!", ex);
         }
     }
 
     @Override
     public void onEnable() {
-        if (!isEnabled()) {
-            return;
-        }
         if (this.databaseAdapter == null) {
             getLogger().severe("Database was not initialized (onLoad failed). Plugin will not enable.");
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
-        if (getServer().getPluginManager().getPlugin("Vault") == null) {
-            getLogger().severe("Missing Vault!");
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
@@ -105,14 +98,11 @@ public final class DemocracyPost extends JavaPlugin {
         getServer().getScheduler().runTaskTimerAsynchronously(
                 this,
                 () -> {
-                    if (this.databaseAdapter == null) {
-                        return;
-                    }
                     getLogger().fine("Transferring expired packages...");
                     try {
                         this.databaseAdapter.transferExpiredPackages(returnPackageExpiryDuration);
                     } catch (SQLException ex) {
-                        ex.printStackTrace();
+                        getLogger().log(Level.SEVERE, "Failed to transfer expired packages", ex);
                     }
                     getLogger().fine("Changes saved!");
                 },
@@ -229,6 +219,11 @@ public final class DemocracyPost extends JavaPlugin {
             adapter.init();
         } catch (SQLException ex) {
             throw new IOException(ex);
+        } catch (RuntimeException ex) {
+            // Hikari reports a bad JDBC url as an unchecked PoolInitializationException. Letting it
+            // escape onLoad() aborts plugin construction with an unhelpful "is it up to date?".
+            throw new IOException("Could not connect using database-settings.url '"
+                    + this.settings.databaseSettings().url() + "' - expected host:port/database", ex);
         }
         return adapter;
     }

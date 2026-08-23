@@ -102,7 +102,7 @@ tasks {
     }
 
     processResources {
-        filesMatching("plugin.yml") {
+        filesMatching("paper-plugin.yml") {
             expand("version" to project.version)
         }
     }

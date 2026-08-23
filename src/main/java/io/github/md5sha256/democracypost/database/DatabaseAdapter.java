@@ -27,6 +27,10 @@ public class DatabaseAdapter implements Closeable {
     }
 
     public void init() throws SQLException {
+        String url = this.databaseSettings.url();
+        if (url.isBlank()) {
+            throw new SQLException("database-settings.url is not set - expected host:port/database");
+        }
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(this.schema.formatJdbcUrl(this.databaseSettings.url()));
         config.setDriverClassName(this.schema.driverClassName());

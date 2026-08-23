@@ -1,0 +1,36 @@
+name: DemocracyPost
+version: '${version}'
+main: io.github.md5sha256.democracypost.DemocracyPost
+loader: io.github.md5sha256.democracypost.DemocracyPostLoader
+api-version: '26.1.2'
+authors: [andrewandy]
+
+dependencies:
+  server:
+    Vault:
+      load: BEFORE
+      required: true
+      join-classpath: true
+    Essentials:
+      load: BEFORE
+      required: true
+      join-classpath: true
+    HeadDatabase:
+      load: BEFORE
+      required: false
+      join-classpath: true
+    PlayerNotifications:
+      load: BEFORE
+      required: false
+      join-classpath: true
+
+permissions:
+  democracypost.open:
+    description: "Display a user's post box for them"
+    default: false
+  democracypost.view:
+    description: "View your own post box"
+    default: false
+  democracypost.view.other:
+    description: "View another user's post box"
+    default: false
