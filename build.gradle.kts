@@ -67,7 +67,7 @@ dependencies {
     compileOnly("org.mariadb.jdbc:mariadb-java-client:3.5.10")
     compileOnly("com.zaxxer:HikariCP:7.1.0")
     // Shaded libs
-    implementation("de.themoep:inventorygui:1.6.1-SNAPSHOT")
+    implementation("de.themoep:inventorygui:1.6.6")
     implementation("org.spongepowered:configurate-yaml:4.2.0")
     implementation("org.spongepowered:configurate-gson:4.2.0")
     implementation("org.incendo:cloud-paper:2.0.0") {
