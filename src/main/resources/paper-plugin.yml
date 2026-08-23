@@ -2,7 +2,7 @@ name: DemocracyPost
 version: '${version}'
 main: io.github.md5sha256.democracypost.DemocracyPost
 loader: io.github.md5sha256.democracypost.DemocracyPostLoader
-api-version: '26.1.2'
+api-version: '1.21.8'
 authors: [andrewandy]
 
 dependencies:

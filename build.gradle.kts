@@ -50,7 +50,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:26.1.2.build.74-stable")
+    compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
     compileOnly("io.github.md5sha256:player-notifications-api:1.0.1")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1") {
@@ -79,13 +79,15 @@ dependencies {
     implementation("org.incendo:cloud-annotations:2.1.0") {
         exclude("com.google.guava")
     }
-    testImplementation("io.papermc.paper:paper-api:26.1.2.build.74-stable")
+    testImplementation("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
     testImplementation("io.github.md5sha256:player-notifications-api:1.0.1")
     testImplementation(platform("org.junit:junit-bom:6.1.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+// Compiled against the Paper 1.21.8 API, but released as Java 25 bytecode: the server must run on
+// a Java 25 JVM, as player-notifications-api already requires.
 val targetJavaVersion = 25
 
 java.toolchain.languageVersion.set(JavaLanguageVersion.of(targetJavaVersion))
@@ -118,7 +120,7 @@ tasks {
     }
 
     runServer {
-        minecraftVersion("26.1.2")
+        minecraftVersion("1.21.8")
         downloadPlugins {
             github("EssentialsX", "essentials", "2.21.2", "EssentialsX-2.21.2.jar")
             github("MilkBowl", "Vault", "1.7.3", "Vault.jar")
