@@ -27,10 +27,10 @@ dependencies:
 permissions:
   democracypost.open:
     description: "Display a user's post box for them"
-    default: false
+    default: op
   democracypost.view:
     description: "View your own post box"
-    default: false
+    default: op
   democracypost.view.other:
     description: "View another user's post box"
-    default: false
+    default: op
