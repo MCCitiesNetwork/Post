@@ -70,7 +70,7 @@ dependencies {
     implementation("de.themoep:inventorygui:1.6.6")
     implementation("org.spongepowered:configurate-yaml:4.2.0")
     implementation("org.spongepowered:configurate-gson:4.2.0")
-    implementation("org.incendo:cloud-paper:2.0.0") {
+    implementation("org.incendo:cloud-paper:2.0.1") {
         exclude("com.google.guava")
     }
     implementation("org.incendo:cloud-processors-confirmation:1.0.0-rc.1") {
