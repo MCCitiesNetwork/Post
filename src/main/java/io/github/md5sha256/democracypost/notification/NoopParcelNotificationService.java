@@ -32,7 +32,7 @@ public class NoopParcelNotificationService implements ParcelNotificationService 
                                 @Nonnull Instant expiry) {
         if (this.warned.compareAndSet(false, true)) {
             this.logger.warning("No parcel notification backend is available; recipients will not be "
-                    + "told about new parcels. Check post-settings.notification-backend.");
+                    + "told about new parcels. Install PlayerNotifications.");
         }
     }
 }

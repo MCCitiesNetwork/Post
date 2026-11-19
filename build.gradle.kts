@@ -39,14 +39,6 @@ repositories {
             includeModule("de.themoep", "inventorygui")
         }
     }
-    maven {
-        name = "essentialsx"
-        url = uri("https://repo.essentialsx.net/releases/")
-        mavenContent {
-            releasesOnly()
-        }
-
-    }
 }
 
 dependencies {
@@ -54,11 +46,6 @@ dependencies {
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
     compileOnly("io.github.md5sha256:player-notifications-api:1.5.0")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1") {
-        exclude(group = "org.bukkit", module = "bukkit")
-        exclude(group = "org.spigotmc", module = "spigot-api")
-        exclude(group = "io.papermc.paper", module = "paper-api")
-    }
-    compileOnly("net.essentialsx:EssentialsX:2.21.2") {
         exclude(group = "org.bukkit", module = "bukkit")
         exclude(group = "org.spigotmc", module = "spigot-api")
         exclude(group = "io.papermc.paper", module = "paper-api")
@@ -122,7 +109,6 @@ tasks {
     runServer {
         minecraftVersion("1.21.8")
         downloadPlugins {
-            github("EssentialsX", "essentials", "2.21.2", "EssentialsX-2.21.2.jar")
             github("MilkBowl", "Vault", "1.7.3", "Vault.jar")
         }
     }

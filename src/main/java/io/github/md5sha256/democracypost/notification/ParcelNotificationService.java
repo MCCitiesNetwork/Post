@@ -5,9 +5,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Tells a player a parcel is waiting for them. The medium — Essentials mail, PlayerNotifications,
- * or nothing at all — is chosen once at startup by {@link ParcelNotificationBackends}; call sites
- * never learn which one they got.
+ * Tells a player a parcel is waiting for them. The backend — PlayerNotifications, or nothing at
+ * all — is chosen once at startup; call sites never learn which one they got.
  */
 public interface ParcelNotificationService {
 

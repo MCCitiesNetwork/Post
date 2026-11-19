@@ -19,9 +19,9 @@ import java.util.UUID;
  */
 public class ParcelNotificationRenderer {
 
-    /** Message key for the notice body. Shared with the Essentials backend, so both read alike. */
+    /** Message key for the notice body. */
     public static final String BODY_MESSAGE_KEY = "messages.new-parcel";
-    /** Message key for the notice title, which only the PlayerNotifications backend shows. */
+    /** Message key for the notice title. */
     public static final String TITLE_MESSAGE_KEY = "messages.new-parcel-title";
 
     private final MessageContainer messageContainer;

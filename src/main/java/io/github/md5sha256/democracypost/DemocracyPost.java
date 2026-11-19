@@ -6,11 +6,8 @@ import io.github.md5sha256.democracypost.heads.HeadDatabaseListener;
 import io.github.md5sha256.democracypost.localization.MessageContainer;
 import io.github.md5sha256.democracypost.model.PostalPackageFactory;
 import io.github.md5sha256.democracypost.notification.DeliveringParcelEnqueuer;
-import io.github.md5sha256.democracypost.notification.EssentialsMailService;
 import io.github.md5sha256.democracypost.notification.NoopParcelNotificationService;
-import io.github.md5sha256.democracypost.notification.NotificationBackend;
 import io.github.md5sha256.democracypost.notification.ParcelDataTypes;
-import io.github.md5sha256.democracypost.notification.ParcelNotificationBackends;
 import io.github.md5sha256.democracypost.notification.ParcelNotificationRenderer;
 import io.github.md5sha256.democracypost.notification.ParcelNotificationService;
 import io.github.md5sha256.democracypost.notification.PlayerNotificationsService;
@@ -35,7 +32,6 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.sql.SQLException;
 import java.time.Duration;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.logging.Level;
 
@@ -179,7 +175,8 @@ public final class DemocracyPost extends JavaPlugin {
     }
 
     /**
-     * Builds the parcel notification backend the config asks for, gated on what is installed.
+     * Builds the parcel notification backend: PlayerNotifications when its service is registered,
+     * otherwise a no-op that warns.
      *
      * <p>PlayerNotifications API classes are only touched inside the branch that has already
      * confirmed the service is registered: they are {@code compileOnly}, so naming one on a server
@@ -187,31 +184,18 @@ public final class DemocracyPost extends JavaPlugin {
      */
     @Nonnull
     private ParcelNotificationService initNotificationService() {
-        NotificationBackend configured = this.settings.postSettings().notificationBackendOrDefault();
         RegisteredServiceProvider<NotificationService> provider =
                 getServer().getServicesManager().getRegistration(NotificationService.class);
-        boolean essentialsAvailable = getServer().getPluginManager().isPluginEnabled("Essentials");
-        ParcelNotificationBackends.Choice choice =
-                ParcelNotificationBackends.choose(configured, provider != null, essentialsAvailable);
-        switch (choice) {
-            case PLAYER_NOTIFICATIONS -> {
-                NotificationService service = provider.getProvider();
-                ParcelDataTypes.registerAll(service, new ParcelNotificationRenderer(this.messageContainer));
-                this.notificationService = service;
-                getLogger().info("Delivering parcel notices through PlayerNotifications.");
-                return new PlayerNotificationsService(
-                        new DeliveringParcelEnqueuer(service::enqueueAndDeliver, getLogger()));
-            }
-            case ESSENTIALS -> {
-                getLogger().info("Delivering parcel notices as Essentials mail.");
-                return new EssentialsMailService(this.messageContainer);
-            }
-            default -> {
-                getLogger().severe("notification-backend is '" + configured.name().toLowerCase(Locale.ROOT)
-                        + "' but that plugin is not available; parcel notices are disabled.");
-                return new NoopParcelNotificationService(getLogger());
-            }
+        if (provider == null) {
+            getLogger().severe("PlayerNotifications is not available; parcel notices are disabled.");
+            return new NoopParcelNotificationService(getLogger());
         }
+        NotificationService service = provider.getProvider();
+        ParcelDataTypes.registerAll(service, new ParcelNotificationRenderer(this.messageContainer));
+        this.notificationService = service;
+        getLogger().info("Delivering parcel notices through PlayerNotifications.");
+        return new PlayerNotificationsService(
+                new DeliveringParcelEnqueuer(service::enqueueAndDeliver, getLogger()));
     }
 
     @Nonnull

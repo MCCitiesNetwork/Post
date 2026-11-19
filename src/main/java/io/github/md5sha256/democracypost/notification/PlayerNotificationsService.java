@@ -15,7 +15,7 @@ import java.util.UUID;
  * until they dismiss it.
  *
  * <p>This class names PlayerNotifications API types directly, so it must only be constructed once
- * that plugin is known to be present; {@link ParcelNotificationBackends} is what decides that.
+ * that plugin is known to be present; plugin startup checks for its service first.
  */
 public class PlayerNotificationsService implements ParcelNotificationService {
 
