@@ -52,7 +52,7 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
     compileOnly("com.arcaniax:HeadDatabase-API:1.3.2")
-    compileOnly("io.github.md5sha256:player-notifications-api:1.0.1")
+    compileOnly("io.github.md5sha256:player-notifications-api:1.5.0")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1") {
         exclude(group = "org.bukkit", module = "bukkit")
         exclude(group = "org.spigotmc", module = "spigot-api")
@@ -80,7 +80,7 @@ dependencies {
         exclude("com.google.guava")
     }
     testImplementation("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
-    testImplementation("io.github.md5sha256:player-notifications-api:1.0.1")
+    testImplementation("io.github.md5sha256:player-notifications-api:1.5.0")
     testImplementation(platform("org.junit:junit-bom:6.1.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
