@@ -5,6 +5,7 @@ import io.github.md5sha256.democracypost.database.DatabaseAdapter;
 import io.github.md5sha256.democracypost.heads.HeadDatabaseListener;
 import io.github.md5sha256.democracypost.localization.MessageContainer;
 import io.github.md5sha256.democracypost.model.PostalPackageFactory;
+import io.github.md5sha256.democracypost.notification.DeliveringParcelEnqueuer;
 import io.github.md5sha256.democracypost.notification.EssentialsMailService;
 import io.github.md5sha256.democracypost.notification.NoopParcelNotificationService;
 import io.github.md5sha256.democracypost.notification.NotificationBackend;
@@ -198,7 +199,8 @@ public final class DemocracyPost extends JavaPlugin {
                 ParcelDataTypes.registerAll(service, new ParcelNotificationRenderer(this.messageContainer));
                 this.notificationService = service;
                 getLogger().info("Delivering parcel notices through PlayerNotifications.");
-                return new PlayerNotificationsService(service::enqueueNotification);
+                return new PlayerNotificationsService(
+                        new DeliveringParcelEnqueuer(service::enqueueAndDeliver, getLogger()));
             }
             case ESSENTIALS -> {
                 getLogger().info("Delivering parcel notices as Essentials mail.");
